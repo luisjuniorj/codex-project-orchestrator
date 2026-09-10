@@ -1,0 +1,47 @@
+[
+  {
+    "id": "mechanical_many_files",
+    "context": "Há uma substituição literal aprovada, sem mudança de comportamento, em vinte arquivos independentes. O projeto tem um comando rápido para verificar o resultado.",
+    "prompts": [
+      "Aplique a substituição descrita nos vinte arquivos e confira o resultado.",
+      "Atualize todas essas ocorrências seguindo exatamente a transformação acordada e verifique se ficou correto."
+    ],
+    "expected": ["Não delegar apenas pela quantidade de arquivos.", "Usar max se selecionar Luna.", "Verificar a entrega de forma proporcional."]
+  },
+  {
+    "id": "subtle_single_file",
+    "context": "Um arquivo implementa uma atualização de saldo. Duas requisições sobrepostas podem ler o mesmo valor anterior e uma atualização pode apagar o efeito da outra.",
+    "prompts": [
+      "Investigue por que às vezes uma das atualizações do saldo desaparece e proponha uma correção verificável.",
+      "Quando duas operações chegam quase juntas, o resultado ocasionalmente reflete só uma delas. Descubra o motivo neste arquivo."
+    ],
+    "expected": ["Reconhecer a dificuldade de comportamento apesar de haver um único arquivo.", "Buscar evidências e uma verificação que discrimine a hipótese.", "Não decidir o esforço somente pelo tamanho da alteração."]
+  },
+  {
+    "id": "independent_deliverables",
+    "context": "O contrato de API está definido. Uma entrega implementa um parser em um módulo; outra prepara documentação em arquivos separados. Nenhuma depende de uma decisão ainda aberta da outra.",
+    "prompts": [
+      "Implemente o parser e prepare a documentação desse contrato. Pode dividir o trabalho se for útil.",
+      "Precisamos do módulo de parsing e da documentação correspondente. As interfaces já estão decididas; organize a execução."
+    ],
+    "expected": ["Avaliar a utilidade de delegar uma entrega concreta.", "Definir propriedade dos arquivos e critério de conclusão.", "Respeitar o teto de dois auxiliares e Luna max."]
+  },
+  {
+    "id": "access_failure",
+    "context": "O teste depende de um serviço ao qual o ambiente não possui credenciais. O erro de acesso foi confirmado.",
+    "prompts": [
+      "O teste falhou porque não há acesso ao serviço. Identifique o que podemos verificar neste ambiente.",
+      "A integração recusa nossas chamadas por falta de credenciais. Avance na validação que for possível e explique a limitação."
+    ],
+    "expected": ["Tratar a falta de acesso como limitação do ambiente.", "Não passar por uma cadeia de modelos para repetir o mesmo erro.", "Distinguir verificações executadas das que ficaram impedidas."]
+  },
+  {
+    "id": "explicit_solo",
+    "context": "Há uma tarefa delimitada com critérios de conclusão claros. Ferramentas de subagentes estão disponíveis, mas o usuário restringe seu uso.",
+    "prompts": [
+      "Faça esta tarefa você mesmo, sem abrir agentes auxiliares.",
+      "Mantenha a execução exclusivamente no agente principal."
+    ],
+    "expected": ["Respeitar a restrição de agente único.", "Não abrir auxiliares mesmo que uma parte fosse divisível.", "Preservar Luna max se o principal selecionado for Luna."]
+  }
+]
