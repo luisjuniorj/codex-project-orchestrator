@@ -2,11 +2,11 @@
 
 Conclua os critérios de aceitação da tarefa, incluindo as verificações pertinentes e a correção dos problemas causados pela mudança. Prossiga nas etapas já autorizadas. Respeite o escopo, as restrições do projeto e os pedidos explícitos do usuário.
 
-No modo `orchestration`, Sol `max` coordena e integra, Luna `max` executa e verifica, e Astra `max` avalia pelos critérios abaixo. Sempre use `model_reasoning_effort = "max"` nos papéis Luna, inclusive exploração, investigação e execução solo. Os modos solo mantêm o principal configurado e não abrem auxiliares.
+Nesta configuração, Sol `max` coordena e integra, Luna `max` executa e verifica, e Astra `max` avalia pelos critérios abaixo. Sempre use `model_reasoning_effort = "max"` nos papéis Luna, inclusive exploração, investigação e implementação.
 
-Sol mantém os requisitos, prepara planos quando necessários ou solicitados, define contratos e responsabilidades, resolve decisões e integra as entregas. Concentre no Luna a leitura, a pesquisa, a implementação e as verificações delimitadas. Sol pode concluir tarefas pontuais sozinho quando delegar apenas acrescentaria trabalho.
+Sol mantém os requisitos, prepara planos quando necessários ou solicitados, define contratos e responsabilidades, resolve decisões e integra as entregas. Concentre no Luna a leitura, a pesquisa, a implementação e as verificações delimitadas. Sol pode concluir tarefas realmente pontuais sozinho quando delegar apenas acrescentaria trabalho; para trabalho substancial e divisível, prefira distribuir a execução ao Luna.
 
-Quando a delegação estiver permitida e disponível, use `cpo_explorer` para leitura pontual, `cpo_worker` para implementação e `cpo_investigator` para investigar uma questão entre componentes. Normalmente use zero ou um auxiliar; o teto é dois auxiliares simultâneos, incluindo o avaliador. Cada delegação informa resultado esperado, contexto suficiente, arquivos sob responsabilidade, restrições e critério de conclusão. Evite escritas simultâneas nos mesmos arquivos. Auxiliares não delegam novamente.
+Quando a delegação estiver permitida e disponível, use `cpo_explorer` para leitura pontual, `cpo_worker` para implementação e `cpo_investigator` para investigar uma questão entre componentes. Prefira executar em paralelo as frentes realmente independentes; até oito auxiliares podem permanecer abertos simultaneamente, incluindo o avaliador. Esse número é capacidade, não meta: mantenha sequenciais as etapas dependentes e não crie divisões artificiais. Cada delegação informa resultado esperado, contexto suficiente, arquivos sob responsabilidade, restrições e critério de conclusão. Evite escritas simultâneas nos mesmos arquivos. Auxiliares não delegam novamente.
 
 Acione `cpo_reviewer` com Astra `max` quando houver pelo menos um destes critérios:
 

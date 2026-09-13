@@ -30,8 +30,8 @@ O download da dependência acontece nessa preparação. Os comandos `install`, `
 ## Prévia e aplicação
 
 ```sh
-python install.py install --project "/caminho/do/projeto" --mode orchestration --dry-run
-python install.py install --project "/caminho/do/projeto" --mode orchestration
+python install.py install --project "/caminho/do/projeto" --dry-run
+python install.py install --project "/caminho/do/projeto"
 ```
 
 O destino precisa existir. Use a raiz do projeto, não a pasta `.codex` nem uma pasta pessoal. Caminhos com espaços são aceitos; use aspas. Links simbólicos, junctions e arquivos com hard links nos destinos gerenciados são rejeitados para evitar redirecionar alterações para fora do projeto.
@@ -53,19 +53,19 @@ Outras opções e comentários TOML são preservados com TOML Kit. A autenticaç
 
 ## Ativar no Codex
 
-Abra uma nova tarefa no projeto confiável. Verifique o modelo principal, o esforço e as instruções carregadas. No modo `orchestration`, o esperado é Sol `max` com auxiliares habilitados; os três papéis de execução usam Luna `max` e o avaliador usa Astra `max`.
+Abra uma nova tarefa no projeto confiável. Verifique o modelo principal, o esforço e as instruções carregadas. O esperado é Sol `max` com até oito auxiliares habilitados; os três papéis de execução usam Luna `max` e o avaliador usa Astra `max`.
 
 Faça uma primeira tarefa pequena e, se quiser validar a delegação, peça explicitamente uma leitura delimitada por `cpo_explorer`. Confira os dados da execução disponibilizados pelo cliente, além do TOML. Uma declaração do modelo sobre qual modelo ele é não substitui essa verificação.
 
 O instalador não força Standard nem altera `service_tier`. Se preservar uso for prioridade, confira Fast desligado; na CLI, use `/fast off` e `/fast status`. Modelos e esforços definidos no arquivo do agente personalizado prevalecem sobre valores resolvidos na criação do auxiliar.
 
-## Trocar de modo e atualizar
+## Atualizar
 
-Execute novamente `install` com o modo desejado. A instalação precisa estar intacta. O modo padrão é `orchestration`; informe `--mode economy` ou `--mode everyday` explicitamente quando quiser esses modos.
+Execute novamente `install`. A instalação precisa estar intacta. O instalador expõe uma única configuração e não aceita `--mode`.
 
 Uma nova versão deste repositório pode atualizar os templates ao executar novamente o instalador, desde que mantenha o formato de estado compatível e os arquivos não tenham sido editados. O backup da primeira instalação permanece. Revise o changelog e use `--dry-run` antes de atualizar.
 
-A versão 0.2.0 atualiza instalações intactas da 0.1.0 com o mesmo formato de estado e os mesmos quatro nomes de agentes. Em `orchestration`, o principal passa a Sol `max`, `cpo_investigator` passa a Luna `max` e `cpo_reviewer` passa a Astra `max`, com avaliação de planos, entregas significativas e pedidos diretos. Os modos solo permanecem disponíveis. O comando `status` mostra a versão e a configuração instaladas, sem atribuir os novos padrões a um projeto que ainda não foi atualizado.
+A versão 0.3.0 atualiza instalações intactas das versões 0.1.0 e 0.2.0 com o mesmo formato de estado e os mesmos quatro nomes de agentes. A atualização aplica Sol `max`, Luna `max`, Astra `max` e eleva o teto de dois para oito auxiliares. Instalações antigas em `everyday` ou `economy` podem ser consultadas, atualizadas e desinstaladas, mas novas instalações não expõem esses modos. O comando `status` mostra a versão e a configuração efetivamente instaladas, sem atribuir os novos valores a um projeto que ainda não foi atualizado.
 
 Se os arquivos gerados forem versionados e clonados em outra máquina, o Codex pode usá-los diretamente. A nova cópia não possui os backups locais da instalação original; o instalador não adota silenciosamente esses arquivos como se os tivesse criado. Use a instalação manual para mantê-los, ou prepare uma instalação registrada após uma remoção revisada dos arquivos da configuração anterior.
 
@@ -110,7 +110,7 @@ model_reasoning_effort = "max"
 
 [agents]
 enabled = true
-max_concurrent_threads_per_session = 2
+max_concurrent_threads_per_session = 8
 default_subagent_model = "gpt-5.6-luna"
 default_subagent_reasoning_effort = "max"
 ```

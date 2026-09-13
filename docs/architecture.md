@@ -1,31 +1,26 @@
 # Arquitetura e escolhas
 
-No modo `orchestration`, Sol `max` mantém requisitos, planos e integração; Luna `max` concentra leitura, investigação, implementação e verificações; Astra `max` faz avaliações profundas em momentos definidos. Tarefas pontuais podem ser concluídas pelo principal quando a delegação apenas acrescentaria trabalho.
+Sol `max` mantém requisitos, planos e integração; Luna `max` concentra leitura, investigação, implementação e verificações; Astra `max` faz avaliações profundas em momentos definidos. Tarefas realmente pontuais podem ser concluídas pelo principal quando a delegação apenas acrescentaria trabalho.
 
 ## Fluxos de uso
 
 ```mermaid
 flowchart TD
-    T["Tarefa"] --> M{"Escolha explícita do modo"}
-    M -->|"Delimitada"| L["Luna · max<br/>Execução solo"]
-    M -->|"Cotidiana"| E["Terra · medium<br/>Execução solo"]
-    M -->|"Orquestração"| S["Sol · max<br/>Requisitos, plano e integração"]
-    S -->|"Execução delimitada"| W["Luna · max<br/>Leitura, investigação, implementação e testes"]
+    T["Tarefa"] --> S["Sol · max<br/>Requisitos, plano e integração"]
+    S -->|"Frentes independentes"| W["Até 8 auxiliares Luna · max<br/>Leitura, investigação, implementação e testes"]
     W -->|"Resultado e evidências"| S
     S -. "Plano, entrega significativa ou pedido direto" .-> A["Astra · max<br/>Avaliação profunda"]
     A -->|"Achados e evidências"| S
-    L --> F["Entrega verificada"]
-    E --> F
-    S --> F
+    S --> F["Entrega verificada"]
 ```
 
-O instalador seleciona um modo por argumento explícito. Ele não classifica linguagem natural, não lê os pedidos do usuário e não executa modelos. As decisões semânticas de delegação, escopo, hipótese e revisão ficam nas instruções do principal e dos auxiliares.
+O instalador aplica uma única configuração de orquestração. Ele não classifica linguagem natural, não lê os pedidos do usuário e não executa modelos. As decisões semânticas de delegação, escopo, hipótese e revisão ficam nas instruções do principal e dos auxiliares.
 
 ## Critérios de avaliação pelo Astra
 
 Sol aciona `cpo_reviewer` quando houver um plano de implementação solicitado ou necessário, uma implementação consolidada grande ou de alto impacto, ou um pedido direto de avaliação aprofundada. Um plano é um artefato com decisões, dependências e estratégia de validação; tarefas simples não precisam produzir esse artefato por rotina. Complexidade, impacto e acoplamento orientam a avaliação de uma implementação, independentemente de contagens de arquivos ou linhas.
 
-“Super avalie” exemplifica a intenção de avaliação aprofundada. Sol interpreta o pedido completo, incluindo outras formulações, negações e conteúdo citado. Não há comando especial nem classificador de palavras. Restrições do usuário, modos solo e indisponibilidade de ferramentas prevalecem, e uma avaliação impedida deve ser informada como não realizada.
+“Super avalie” exemplifica a intenção de avaliação aprofundada. Sol interpreta o pedido completo, incluindo outras formulações, negações e conteúdo citado. Não há comando especial nem classificador de palavras. Restrições do usuário e indisponibilidade de ferramentas prevalecem, e uma avaliação impedida deve ser informada como não realizada.
 
 O plano consolidado é avaliado antes da execução dependente de suas decisões. Quando o pedido inclui implementar, os achados são incorporados e o trabalho autorizado continua. Um pedido somente de planejamento ou avaliação termina nessa entrega. Uma implementação significativa é avaliada ao ser consolidada; a avaliação do plano e a do código têm objetos distintos.
 
@@ -39,13 +34,14 @@ A avaliação ocorre uma vez por plano ou entrega consolidada que satisfaça os 
 
 Sol, Luna e Astra usam `max` no fluxo de orquestração por escolha explícita. Luna tem taxas por token menores, mas o consumo total também depende de contexto, frequência de avaliações e retrabalho. Mais esforço pode elevar tempo e tokens; a configuração não comprova economia de franquia nem qualidade superior em toda tarefa.
 
-Os modelos e esforços são fixados nos TOMLs dos agentes. O papel `cpo_investigator` continua existindo para investigar questões delimitadas entre componentes, agora com Luna `max`. A decisão central permanece com Sol. Terra `medium` permanece apenas no modo solo `everyday`; Luna `max` é o principal do modo solo `economy`.
+Os modelos e esforços são fixados nos TOMLs dos agentes. O papel `cpo_investigator` investiga questões delimitadas entre componentes com Luna `max`; a decisão central permanece com Sol.
 
-A versão 0.2.0 preserva os quatro caminhos de agentes e o schema de instalação da 0.1.0. Reinstalar atualiza modelos e instruções, mantendo o backup original. O comando `status` lê a configuração instalada, de modo que uma instalação antiga continue sendo apresentada com seus próprios valores antes da atualização.
+A versão 0.3.0 preserva os quatro caminhos de agentes e o schema de instalação das versões anteriores. Reinstalar uma instalação intacta remove os antigos modos alternativos, aplica a configuração única e aumenta o teto de auxiliares de dois para oito, mantendo o backup original. Estados antigos `everyday` e `economy` continuam aceitos apenas para consulta, atualização e restauração seguras. O comando `status` lê a configuração instalada, de modo que uma instalação antiga continue sendo apresentada com seus próprios valores antes da atualização.
 
 ## Limites do desenho
 
-- Dois auxiliares simultâneos é um teto de concorrência. Várias chamadas sucessivas ainda podem consumir muito.
+- Oito auxiliares simultâneos, excluindo o principal, é um teto de concorrência e não uma meta. Cada contexto continua consumindo uso.
+- Paralelismo ajuda quando as frentes são independentes; dependências, arquivos compartilhados e decisões ainda abertas exigem coordenação ou execução sequencial.
 - A proibição de delegação em cascata é uma instrução de comportamento, não um mecanismo rígido de orçamento.
 - Um revisor adicional não garante encontrar todos os defeitos. Achados devem ter evidências.
 - Os testes do instalador comprovam propriedades de arquivos e configuração; não comprovam a qualidade dos modelos ou economia da franquia.

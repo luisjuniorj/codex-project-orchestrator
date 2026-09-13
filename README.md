@@ -65,13 +65,13 @@ Se houver um `AGENTS.override.md` não vazio na raiz do projeto, o bloco será a
 
 | Papel | Modelo | Effort | Quando entra |
 |---|---|---|---|
-| Principal de `orchestration` | `gpt-5.6-sol` | **`max`** | Entende, planeja, coordena e integra. |
+| Principal | `gpt-5.6-sol` | **`max`** | Entende, planeja, coordena e integra. |
 | `cpo_explorer` | `gpt-5.6-luna` | **`max`** | Leitura e coleta de evidências delimitadas. |
 | `cpo_worker` | `gpt-5.6-luna` | **`max`** | Implementação com entrega e arquivos definidos. |
 | `cpo_investigator` | `gpt-5.6-luna` | **`max`** | Investigação delimitada entre componentes. |
 | `cpo_reviewer` | `gpt-6-astra` | **`max`** | Avaliação profunda pelos critérios abaixo. |
 
-Os três modelos do fluxo de orquestração usam `max`; Luna também usa `max` no modo solo. É uma escolha explícita, sem promessa de economia ou qualidade superior em toda tarefa. O controle de consumo depende do escopo, da frequência das avaliações e do retrabalho. Modelos e esforços fixados nos TOMLs dos agentes prevalecem sobre os valores resolvidos ao criar o auxiliar; um pedido verbal não altera esses arquivos.
+Os três modelos usam `max`. É uma escolha explícita, sem promessa de economia ou qualidade superior em toda tarefa. O controle de consumo depende do escopo, da frequência das avaliações e do retrabalho. Modelos e esforços fixados nos TOMLs dos agentes prevalecem sobre os valores resolvidos ao criar o auxiliar; um pedido verbal não altera esses arquivos.
 
 ```mermaid
 flowchart TD
@@ -79,8 +79,8 @@ flowchart TD
 
     S["SOL · MAX<br/>Entende, planeja, delega e integra"]
 
-    S -->|"Trabalho e correções delimitadas"| L
-    L["LUNA · MAX<br/>Lê, pesquisa, investiga,<br/>implementa e testa"]
+    S -->|"Frentes independentes"| L
+    L["ATÉ 8 LUNAS · MAX<br/>Leem, pesquisam, investigam,<br/>implementam e testam"]
     L -->|"Resultados e evidências"| S
 
     S -.->|"Aciona quando houver um destes critérios"| G
@@ -94,7 +94,7 @@ flowchart TD
     D["ENTREGA PARA VOCÊ"]
 ```
 
-O uso normal é zero ou um auxiliar; o teto é **dois auxiliares simultâneos**, incluindo o avaliador. Esse teto limita concorrência, não tokens ou consumo acumulado. Tarefas pontuais podem ser concluídas pelo Sol quando delegar apenas acrescentaria trabalho. Os executores fazem sua própria verificação; não existe um tester obrigatório.
+Até **oito auxiliares simultâneos**, além do Sol, podem permanecer abertos; o avaliador Astra conta dentro desses oito. Frentes independentes devem aproveitar o paralelismo, enquanto etapas dependentes continuam sequenciais e escritas no mesmo arquivo não são distribuídas ao mesmo tempo. Oito é capacidade, não meta. Cada contexto ainda consome uso, e os executores fazem sua própria verificação; não existe um tester obrigatório.
 
 ## Quando o Astra avalia
 
@@ -108,32 +108,19 @@ Sol decide pelo significado da tarefa, pela complexidade, pelo impacto e pelas d
 
 Sol confere atendimento aos requisitos e integração, sem fazer outra revisão profunda com o mesmo objetivo. Astra consulta código e contexto com independência. Avalie uma vez por plano ou entrega consolidada, evitando chamadas a cada atualização do executor. Correções voltam ao Luna; uma reavaliação necessária se concentra nos achados e nos efeitos das mudanças.
 
-Um pedido que inclui plano e implementação significativa pode ter duas avaliações, de objetos distintos. Depois de incorporar os achados do plano, Sol prossegue com a implementação já autorizada. Se o pedido for somente planejamento ou avaliação, entrega esse resultado. Restrições explícitas do usuário e modos sem auxiliares prevalecem; uma avaliação impedida deve ser informada como não realizada.
+Um pedido que inclui plano e implementação significativa pode ter duas avaliações, de objetos distintos. Depois de incorporar os achados do plano, Sol prossegue com a implementação já autorizada. Se o pedido for somente planejamento ou avaliação, entrega esse resultado. Restrições explícitas do usuário e indisponibilidade de auxiliares prevalecem; uma avaliação impedida deve ser informada como não realizada.
 
-## Três modos
+## Configuração única
 
-| `--mode` | Principal | Auxiliares | Uso sugerido |
-|---|---|---|---|
-| `orchestration` — padrão | Sol **`max`** | Habilitados, teto 2 | Coordenação, execução pelo Luna e avaliação pelo Astra conforme os critérios. |
-| `everyday` | Terra `medium` | Desabilitados | Desenvolvimento cotidiano. |
-| `economy` | Luna **`max`** | Desabilitados | Tarefas claras e delimitadas. |
-
-Para instalar outro modo ou trocar o modo de uma instalação intacta:
-
-```sh
-python install.py install --project "/caminho/do/meu-projeto" --mode economy --dry-run
-python install.py install --project "/caminho/do/meu-projeto" --mode economy
-```
-
-Os modos são escolhas explícitas. Não há um roteador que troca automaticamente o modelo principal conforme as palavras do pedido. Trocar somente o modelo no seletor do Codex também não muda automaticamente todas as opções do modo, como `agents.enabled`.
+O instalador expõe somente este fluxo de orquestração. Não existe `--mode`, roteador por palavras nem troca automática do modelo principal. Instalações intactas das versões 0.1.0 e 0.2.0 podem ser atualizadas; estados antigos `everyday` e `economy` são aceitos apenas para permitir atualização, consulta e restauração seguras.
 
 ## Repetir em outros projetos
 
 Use a mesma cópia do instalador, alterando `--project`:
 
 ```sh
-python install.py install --project "/projetos/site" --mode orchestration
-python install.py install --project "/projetos/biblioteca" --mode everyday
+python install.py install --project "/projetos/site"
+python install.py install --project "/projetos/biblioteca"
 ```
 
 Cada projeto terá seu próprio estado e suas próprias regras. Repetir a instalação sem mudanças não duplica instruções e não regrava arquivos gerenciados.
@@ -142,7 +129,7 @@ Você pode versionar a configuração, os agentes e as instruções geradas no G
 
 Para pedir a instalação ao Codex, após disponibilizar este repositório:
 
-> Leia o README do Codex Project Orchestrator nesta cópia. Instale o modo orchestration exclusivamente no projeto que estou indicando, preservando as configurações existentes e usando Luna sempre em max. Execute a prévia, confira os arquivos de destino e aplique a instalação. Não altere configurações globais.
+> Leia o README do Codex Project Orchestrator nesta cópia. Instale a configuração exclusivamente no projeto que estou indicando, preservando as opções existentes e usando até oito auxiliares Luna em max quando houver frentes independentes. Execute a prévia, confira os arquivos de destino e aplique a instalação. Não altere configurações globais.
 
 ## Conferir e desinstalar
 
@@ -152,7 +139,7 @@ python install.py uninstall --project "/caminho/do/meu-projeto" --dry-run
 python install.py uninstall --project "/caminho/do/meu-projeto"
 ```
 
-`status` informa a versão instalada e o principal registrado no arquivo de configuração, inclusive antes de atualizar uma instalação antiga. Verifica os arquivos em disco; não inspeciona uma sessão ativa do Codex. A desinstalação restaura os arquivos anteriores à primeira instalação e remove os arquivos criados por ela, desde que estejam intactos. Trocar de modo mantém os backups originais.
+`status` informa a versão instalada, o principal e o teto de auxiliares registrados no arquivo de configuração, inclusive antes de atualizar uma instalação antiga. Verifica os arquivos em disco; não inspeciona uma sessão ativa do Codex. A desinstalação restaura os arquivos anteriores à primeira instalação e remove os arquivos criados por ela, desde que estejam intactos. Atualizações mantêm os backups originais.
 
 Se um arquivo gerenciado tiver sido alterado depois, a reinstalação e a desinstalação param antes de sobrescrevê-lo. Isso inclui edições em configurações e instruções. Não há `--force`. Consulte [atualização e recuperação manual](docs/installation.md#arquivos-modificados-e-recuperação).
 
@@ -162,7 +149,7 @@ Se um arquivo gerenciado tiver sido alterado depois, a reinstalação e a desins
 python -m unittest discover -s tests -v
 ```
 
-A suíte cobre instalação, mesclagem de TOML, backups, modos, conflitos, caminhos, reinstalação e rollback. O workflow de CI está configurado para Linux, macOS e Windows com Python 3.11 e 3.14. Os resultados de cada execução estão no [GitHub Actions](https://github.com/luisjuniorj/codex-project-orchestrator/actions). Veja também o [registro de validação local](docs/validation.md).
+A suíte cobre instalação, configuração única, atualização de estados legados, mesclagem de TOML, backups, conflitos, caminhos, reinstalação e rollback. O workflow de CI está configurado para Linux, macOS e Windows com Python 3.11 e 3.14. Os resultados de cada execução estão no [GitHub Actions](https://github.com/luisjuniorj/codex-project-orchestrator/actions). Veja também o [registro de validação local](docs/validation.md).
 
 Os testes não chamam modelos e não consomem a franquia do Codex. Os [casos de avaliação semântica](docs/evaluation.md) permitem conferir a política em tarefas reais, mas não são apresentados como um benchmark já executado. Uma escolha de modelo ou topologia pode precisar de ajustes para seu trabalho.
 

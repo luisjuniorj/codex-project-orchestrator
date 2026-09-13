@@ -24,8 +24,14 @@ try:
 except ImportError:
     raise SystemExit("Dependência ausente. Execute: python -m pip install -r requirements.txt")
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 TOOL = "codex-project-orchestrator"
+INSTALL_PROFILE = "orchestration"
+# Kept only so intact 0.1/0.2 installations can still be inspected, upgraded,
+# and uninstalled. New installations expose a single configuration.
+LEGACY_STATE_MODES = frozenset({"orchestration", "everyday", "economy"})
+PRIMARY_CONFIG = ("gpt-5.6-sol", "max", True)
+MAX_CONCURRENT_THREADS = 8
 TEMPLATES = Path(__file__).resolve().parent / "templates"
 STATE_DIR = ".codex/.project-orchestrator"
 STATE_FILE = f"{STATE_DIR}/state.json"
@@ -37,11 +43,6 @@ ROLES = {
     "cpo_worker": ("gpt-5.6-luna", "max"),
     "cpo_investigator": ("gpt-5.6-luna", "max"),
     "cpo_reviewer": ("gpt-6-astra", "max"),
-}
-MODES = {
-    "orchestration": ("gpt-5.6-sol", "max", True),
-    "everyday": ("gpt-5.6-terra", "medium", False),
-    "economy": ("gpt-5.6-luna", "max", False),
 }
 AGENT_FILES = {f".codex/agents/{name}.toml" for name in ROLES}
 ALLOWED_FILES = AGENT_FILES | {CONFIG, IGNORE, "AGENTS.md", "AGENTS.override.md"}
@@ -222,7 +223,7 @@ def load_state(root: Path) -> dict | None:
         return None
     try:
         state = json.loads(raw)
-        if state["schema"] != 1 or state["tool"] != TOOL or state["mode"] not in MODES:
+        if state["schema"] != 1 or state["tool"] != TOOL or state["mode"] not in LEGACY_STATE_MODES:
             raise ValueError("schema")
         if state["instructions"] not in {"AGENTS.md", "AGENTS.override.md"}:
             raise ValueError("instructions")
@@ -282,7 +283,7 @@ def append_block(data: bytes | None, body: str, begin: str, end: str) -> bytes:
     return (text + separator + block).encode("utf-8")
 
 
-def render_config(data: bytes | None, mode: str) -> bytes:
+def render_config(data: bytes | None) -> bytes:
     try:
         document = tomlkit.parse((data or b"").decode("utf-8"))
     except (ValueError, tomlkit.exceptions.ParseError) as error:
@@ -294,17 +295,24 @@ def render_config(data: bytes | None, mode: str) -> bytes:
         raise InstallError("A chave agents precisa ser uma tabela TOML.")
     if set(agents) & set(ROLES):
         raise InstallError("Há papéis cpo_* declarados em [agents]. Resolva essa colisão antes de instalar.")
-    model, effort, enabled = MODES[mode]
+    model, effort, enabled = PRIMARY_CONFIG
     document["model"] = model
     document["model_reasoning_effort"] = effort
     agents["enabled"] = enabled
     agents.pop("max_threads", None)  # Native legacy alias for the same controlled limit.
-    agents["max_concurrent_threads_per_session"] = 2
+    agents["max_concurrent_threads_per_session"] = MAX_CONCURRENT_THREADS
     agents["default_subagent_model"] = "gpt-5.6-luna"
     agents["default_subagent_reasoning_effort"] = "max"
     result = tomlkit.dumps(document).encode("utf-8")
     parsed = tomllib.loads(result.decode("utf-8"))
-    if parsed["model"] != model or parsed["agents"]["default_subagent_reasoning_effort"] != "max":
+    parsed_agents = parsed["agents"]
+    if (
+        parsed["model"] != model
+        or parsed["model_reasoning_effort"] != effort
+        or parsed_agents["enabled"] is not enabled
+        or parsed_agents["max_concurrent_threads_per_session"] != MAX_CONCURRENT_THREADS
+        or parsed_agents["default_subagent_reasoning_effort"] != "max"
+    ):
         raise InstallError("Falha ao validar a configuração gerada.")
     return result
 
@@ -348,7 +356,7 @@ def check_other_agents(root: Path) -> None:
             raise InstallError(f"Nome de agente cpo_* já utilizado em {relative}")
 
 
-def installation_plan(root: Path, mode: str, missing_dirs: list[str]) -> tuple[list[Change], list[str]]:
+def installation_plan(root: Path, missing_dirs: list[str]) -> tuple[list[Change], list[str]]:
     state = load_state(root)
     instruction = instructions_file(root)
     if state:
@@ -367,7 +375,7 @@ def installation_plan(root: Path, mode: str, missing_dirs: list[str]) -> tuple[l
             raise InstallError("Agentes de destino já existem sem estado deste instalador: " + ", ".join(collisions))
     originals = {relative: original(root, state, relative) if state else current[relative] for relative in managed}
     desired = {
-        CONFIG: render_config(current[CONFIG].content, mode),
+        CONFIG: render_config(current[CONFIG].content),
         instruction: append_block(originals[instruction].content, (TEMPLATES / "policy.md").read_text(encoding="utf-8"), POLICY_BEGIN, POLICY_END),
         IGNORE: append_block(originals[IGNORE].content, "/.project-orchestrator/", IGNORE_BEGIN, IGNORE_END),
         **roles,
@@ -393,7 +401,7 @@ def installation_plan(root: Path, mode: str, missing_dirs: list[str]) -> tuple[l
         }
     changes.extend(Change(relative, current[relative], Snapshot(desired[relative], current[relative].mode)) for relative in managed)
     new_state = {
-        "schema": 1, "tool": TOOL, "version": VERSION, "mode": mode,
+        "schema": 1, "tool": TOOL, "version": VERSION, "mode": INSTALL_PROFILE,
         "instructions": instruction, "files": entries,
         "created_dirs": state["created_dirs"] if state else missing_dirs,
     }
@@ -409,16 +417,14 @@ def describe(changes: list[Change], managed: list[str]) -> None:
         print(f"  {action}: {change.relative}")
 
 
-def install(project: str | Path, mode: str = "orchestration", dry_run: bool = False) -> int:
+def install(project: str | Path, *, dry_run: bool = False) -> int:
     root = project_root(project)
-    if mode not in MODES:
-        raise InstallError("Modo desconhecido.")
     missing = [rel for rel in (".codex", ".codex/agents") if not local_path(root, rel).exists()]
     if dry_run:
         if local_path(root, LOCK_FILE).exists():
             raise InstallError("Há uma operação em andamento ou um lock pendente.")
-        changes, managed = installation_plan(root, mode, missing)
-        print(f"Prévia — {root}\nModo: {mode}; Luna sempre max. Nenhum arquivo será alterado.")
+        changes, managed = installation_plan(root, missing)
+        print(f"Prévia — {root}\nSol, Luna e Astra em max; até {MAX_CONCURRENT_THREADS} auxiliares. Nenhum arquivo será alterado.")
         describe(changes, managed)
         if changes:
             print(f"  estado e backups locais: {STATE_DIR}/")
@@ -426,9 +432,9 @@ def install(project: str | Path, mode: str = "orchestration", dry_run: bool = Fa
             print("Configuração já está atualizada.")
         return 0
     with project_lock(root):
-        changes, managed = installation_plan(root, mode, missing)
+        changes, managed = installation_plan(root, missing)
         commit(root, changes)
-        print(f"Projeto: {root}\nModo: {mode}")
+        print(f"Projeto: {root}\nConfiguração de orquestração instalada; até {MAX_CONCURRENT_THREADS} auxiliares.")
         describe(changes, managed)
         print("Instalação concluída." if changes else "Configuração já está atualizada; nenhum arquivo gerenciado mudou.")
     return 0
@@ -445,7 +451,9 @@ def status(project: str | Path) -> int:
     changed = drift(root, state)
     if instructions_file(root) != state["instructions"]:
         changed.append("arquivo de instruções ativo")
-    print(f"Projeto: {root}\nModo registrado: {state['mode']}\nVersão instalada: {state.get('version', 'não registrada')}")
+    print(f"Projeto: {root}\nVersão instalada: {state.get('version', 'não registrada')}")
+    if state["mode"] != INSTALL_PROFILE:
+        print(f"Modo legado registrado: {state['mode']}")
     if changed:
         print("Divergências em disco: " + ", ".join(changed))
         return 2
@@ -513,12 +521,10 @@ def main(argv: list[str] | None = None) -> int:
         sub.add_argument("--project", required=True, help="Pasta existente do projeto; nunca usa o diretório atual implicitamente.")
         if command != "status":
             sub.add_argument("--dry-run", action="store_true", help="Mostrar o plano sem gravar arquivos.")
-        if command == "install":
-            sub.add_argument("--mode", choices=MODES, default="orchestration")
     args = parser.parse_args(argv)
     try:
         if args.command == "install":
-            return install(args.project, args.mode, args.dry_run)
+            return install(args.project, dry_run=args.dry_run)
         if args.command == "uninstall":
             return uninstall(args.project, args.dry_run)
         return status(args.project)

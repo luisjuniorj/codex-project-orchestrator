@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 — 2026-09-13
+
+- Configuração única de orquestração; os modos `everyday` e `economy` e a opção `--mode` deixaram de ser oferecidos.
+- Teto ampliado de dois para oito auxiliares simultâneos, além do principal, com preferência por paralelismo em frentes independentes.
+- Compatibilidade mantida para consultar, atualizar e desinstalar instalações antigas que registrem os modos removidos.
+- Atualização intacta da 0.2.0 preserva os backups originais e aplica o novo teto de concorrência.
+- Documentação, casos semânticos e testes ajustados para a configuração única.
+
 ## 0.2.0 — 2026-09-13
 
 - Sol `max` como principal do modo `orchestration`; Luna `max` em leitura, investigação e implementação; Astra `max` na avaliação profunda.

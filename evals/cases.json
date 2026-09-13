@@ -24,7 +24,7 @@
       "Implemente o parser e prepare a documentação desse contrato. Pode dividir o trabalho se for útil.",
       "Precisamos do módulo de parsing e da documentação correspondente. As interfaces já estão decididas; organize a execução."
     ],
-    "expected": ["Avaliar a utilidade de delegar uma entrega concreta.", "Definir propriedade dos arquivos e critério de conclusão.", "Respeitar o teto de dois auxiliares e Luna max."]
+    "expected": ["Executar as duas entregas independentes em paralelo com Luna max quando as ferramentas estiverem disponíveis.", "Definir propriedade dos arquivos e critério de conclusão para cada auxiliar.", "Respeitar o teto de oito auxiliares e integrar os resultados no Sol."]
   },
   {
     "id": "access_failure",
@@ -42,7 +42,7 @@
       "Faça esta tarefa você mesmo, sem abrir agentes auxiliares.",
       "Mantenha a execução exclusivamente no agente principal."
     ],
-    "expected": ["Respeitar a restrição de agente único mesmo que o plano satisfaça um critério de avaliação pelo Astra.", "Entregar o plano sem afirmar que houve avaliação independente pelo Astra.", "Preservar Luna max se o principal selecionado for Luna."]
+    "expected": ["Respeitar a restrição de agente único mesmo que o plano satisfaça um critério de avaliação pelo Astra.", "Entregar o plano sem afirmar que houve avaliação independente pelo Astra.", "Manter Sol max como principal sem tentar trocar de configuração pelo texto do pedido."]
   },
   {
     "id": "implementation_plan",

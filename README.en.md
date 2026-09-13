@@ -47,11 +47,11 @@ Everything goes into the target project:
 
 No personal Codex configuration is modified. Project configuration still inherits settings that are not overridden and respects environment policies. The installer does not change authentication, sandbox permissions, MCP configuration or project trust.
 
-## Roles and modes
+## Roles
 
 | Role | Model | Reasoning effort |
 |---|---|---|
-| Orchestration primary | `gpt-5.6-sol` | **`max`** |
+| Primary | `gpt-5.6-sol` | **`max`** |
 | `cpo_explorer` | `gpt-5.6-luna` | **`max`** |
 | `cpo_worker` | `gpt-5.6-luna` | **`max`** |
 | `cpo_investigator` | `gpt-5.6-luna` | **`max`** |
@@ -63,8 +63,8 @@ flowchart TD
 
     S["SOL · MAX<br/>Understands, plans, delegates, and integrates"]
 
-    S -->|"Bounded work and corrections"| L
-    L["LUNA · MAX<br/>Reads, researches, investigates,<br/>implements, and tests"]
+    S -->|"Independent workstreams"| L
+    L["UP TO 8 LUNAS · MAX<br/>Read, research, investigate,<br/>implement, and test"]
     L -->|"Results and evidence"| S
 
     S -.->|"Activates when one of these criteria applies"| G
@@ -78,25 +78,15 @@ flowchart TD
     D["DELIVERY TO YOU"]
 ```
 
-Typically use zero or one helper, with a maximum of two concurrent helpers including reviewers. Concurrency is not a token or spending cap. Every executor validates its own work; there is no mandatory testing agent.
+Up to **eight concurrent helpers**, in addition to Sol, may remain open; the Astra reviewer counts within those eight. Independent work should use the available parallelism, while dependent stages remain sequential and agents do not write the same files concurrently. Eight is capacity, not a target. Each context still consumes usage, and every executor validates its own work; there is no mandatory testing agent.
 
 Astra evaluates a consolidated implementation plan before execution, a consolidated implementation whose complexity or impact warrants deep evaluation, or an object explicitly submitted for thorough evaluation. “Super avalie” is an example request, not a literal command: equivalent requests, negations, and quoted text are interpreted by the agent. File or line counts do not determine significance, and a small task does not need a formal plan just to activate a reviewer.
 
-Sol checks requirements and integration without duplicating Astra's deep evaluation. Astra examines relevant sources independently. Corrections go back to Luna; any necessary reassessment focuses on previous findings and the effects of fixes. Plan evaluation and implementation evaluation cover different objects. Continue already-authorized implementation after addressing plan findings; stop at the plan or evaluation when that is all the user requested. Explicit restrictions and solo modes take precedence, and an unavailable evaluation must be reported as not performed.
+Sol checks requirements and integration without duplicating Astra's deep evaluation. Astra examines relevant sources independently. Corrections go back to Luna; any necessary reassessment focuses on previous findings and the effects of fixes. Plan evaluation and implementation evaluation cover different objects. Continue already-authorized implementation after addressing plan findings; stop at the plan or evaluation when that is all the user requested. Explicit restrictions and unavailable helpers take precedence, and an unavailable evaluation must be reported as not performed.
 
-Three explicit installation modes are available:
+## Single configuration
 
-| `--mode` | Primary | Helpers |
-|---|---|---|
-| `orchestration` — default | Sol **`max`** | Enabled, maximum 2 |
-| `everyday` | Terra `medium` | Disabled |
-| `economy` | Luna **`max`** | Disabled |
-
-```sh
-python install.py install --project "/path/to/your-project" --mode economy
-```
-
-Reinstalling an unchanged installation is idempotent. Version 0.2.0 can upgrade intact 0.1.0 installations while preserving original backups and agent filenames. Preview the update with `--dry-run`. Modes are selected explicitly; there is no natural-language classifier or automatic primary-model switching. A model selector alone does not switch the remaining mode settings.
+The installer exposes only this orchestration flow. There is no `--mode`, keyword router, or automatic primary-model switching. Intact 0.1.0 and 0.2.0 installations can be upgraded while preserving original backups and agent filenames. Legacy `everyday` and `economy` state values are accepted only for safe inspection, upgrade, and restoration. Preview an update with `--dry-run`; reinstalling an unchanged installation is idempotent.
 
 ## Restore and maintain
 

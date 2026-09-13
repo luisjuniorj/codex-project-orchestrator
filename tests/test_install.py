@@ -62,8 +62,14 @@ class InstallerTests(unittest.TestCase):
     def uninstall(self, **kwargs):
         return self.run_quiet(cpo.uninstall, self.project, **kwargs)
 
-    def install_legacy_version(self):
-        """Create a schema-1 installation with the model settings shipped in 0.1.0."""
+    def install_legacy_version(
+        self,
+        *,
+        version="0.1.0",
+        mode="orchestration",
+        primary=("gpt-6-astra", "low", True),
+    ):
+        """Create a schema-1 installation with settings shipped before 0.3.0."""
         templates = self.base / "legacy-templates"
         (templates / "agents").mkdir(parents=True)
         (templates / "policy.md").write_text("## Política anterior\n\nAstra coordena e implementa.\n", encoding="utf-8")
@@ -78,9 +84,15 @@ class InstallerTests(unittest.TestCase):
             document["model"] = model
             document["model_reasoning_effort"] = effort
             (templates / "agents" / f"{name}.toml").write_text(cpo.tomlkit.dumps(document), encoding="utf-8")
-        with patch.object(cpo, "VERSION", "0.1.0"), patch.object(cpo, "TEMPLATES", templates), patch.object(cpo, "ROLES", roles):
-            with patch.dict(cpo.MODES, {"orchestration": ("gpt-6-astra", "low", True)}):
-                self.install()
+        with (
+            patch.object(cpo, "VERSION", version),
+            patch.object(cpo, "INSTALL_PROFILE", mode),
+            patch.object(cpo, "PRIMARY_CONFIG", primary),
+            patch.object(cpo, "MAX_CONCURRENT_THREADS", 2),
+            patch.object(cpo, "TEMPLATES", templates),
+            patch.object(cpo, "ROLES", roles),
+        ):
+            self.install()
 
     def test_fresh_install_is_project_scoped_and_uses_sol_luna_astra_max(self):
         global_before = self.tree(self.fake_home)
@@ -91,7 +103,7 @@ class InstallerTests(unittest.TestCase):
         self.assertTrue(config["agents"]["enabled"])
         self.assertEqual(config["agents"]["default_subagent_model"], "gpt-5.6-luna")
         self.assertEqual(config["agents"]["default_subagent_reasoning_effort"], "max")
-        self.assertEqual(config["agents"]["max_concurrent_threads_per_session"], 2)
+        self.assertEqual(config["agents"]["max_concurrent_threads_per_session"], 8)
         self.assertEqual(self.tree(self.fake_home), global_before)
         expected_roles = {
             "cpo_explorer": ("gpt-5.6-luna", "max"),
@@ -118,6 +130,7 @@ class InstallerTests(unittest.TestCase):
         config = tomllib.loads((self.project / cpo.CONFIG).read_text(encoding="utf-8"))
         self.assertEqual((config["model"], config["model_reasoning_effort"]), ("gpt-5.6-sol", "max"))
         self.assertEqual(config["service_tier"], "default")
+        self.assertEqual(config["agents"]["max_concurrent_threads_per_session"], 8)
         for name, expected in {"cpo_investigator": "gpt-5.6-luna", "cpo_reviewer": "gpt-6-astra"}.items():
             agent = tomllib.loads((self.project / f".codex/agents/{name}.toml").read_text(encoding="utf-8"))
             self.assertEqual((agent["model"], agent["model_reasoning_effort"]), (expected, "max"))
@@ -228,16 +241,30 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual({p: p.stat().st_mtime_ns for p in mtimes}, mtimes)
         self.assertEqual((self.project / "AGENTS.md").read_text(encoding="utf-8").count(cpo.POLICY_BEGIN), 1)
 
-    def test_mode_switch_keeps_original_backup_and_luna_max(self):
-        self.write(cpo.CONFIG, 'model = "original"\n')
-        before = self.tree()
-        for mode, expected in cpo.MODES.items():
-            self.install(mode=mode)
-            data = tomllib.loads((self.project / cpo.CONFIG).read_text(encoding="utf-8"))
-            self.assertEqual((data["model"], data["model_reasoning_effort"], data["agents"]["enabled"]), expected)
-            self.assertEqual(data["agents"]["default_subagent_reasoning_effort"], "max")
+    def test_legacy_economy_mode_can_be_upgraded_and_uninstalled(self):
+        self.install_legacy_version(mode="economy", primary=("gpt-5.6-luna", "max", False))
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(cpo.status(self.project), 0)
+        self.assertIn("Modo legado registrado: economy", output.getvalue())
+        self.install()
+        data = tomllib.loads((self.project / cpo.CONFIG).read_text(encoding="utf-8"))
+        self.assertEqual((data["model"], data["model_reasoning_effort"], data["agents"]["enabled"]), cpo.PRIMARY_CONFIG)
+        self.assertEqual(data["agents"]["max_concurrent_threads_per_session"], 8)
+        self.assertEqual(cpo.load_state(self.project)["mode"], "orchestration")
         self.uninstall()
-        self.assertEqual(self.tree(), before)
+        self.assertEqual(list(self.project.iterdir()), [])
+
+    def test_upgrade_from_020_increases_parallel_limit(self):
+        self.install_legacy_version(version="0.2.0", primary=("gpt-5.6-sol", "max", True))
+        before = self.tree(self.project / cpo.STATE_DIR / "original")
+        config = tomllib.loads((self.project / cpo.CONFIG).read_text(encoding="utf-8"))
+        self.assertEqual(config["agents"]["max_concurrent_threads_per_session"], 2)
+        self.install()
+        config = tomllib.loads((self.project / cpo.CONFIG).read_text(encoding="utf-8"))
+        self.assertEqual(config["agents"]["max_concurrent_threads_per_session"], 8)
+        self.assertEqual(cpo.load_state(self.project)["version"], cpo.VERSION)
+        self.assertEqual(self.tree(self.project / cpo.STATE_DIR / "original"), before)
 
     def test_uninstall_fresh_install_restores_empty_project(self):
         self.install()
@@ -468,12 +495,21 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(list(self.project.iterdir()), [])
 
+    def test_cli_rejects_removed_mode_option_without_writing(self):
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "install.py"), "install", "--project", str(self.project), "--mode", "economy"],
+            capture_output=True, text=True, encoding="utf-8",
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("unrecognized arguments", result.stderr)
+        self.assertEqual(list(self.project.iterdir()), [])
+
     def test_separate_projects_have_independent_state(self):
         other = self.base / "second-project"
         other.mkdir()
         self.install()
         before = self.tree()
-        self.run_quiet(cpo.install, other, mode="economy")
+        self.run_quiet(cpo.install, other)
         self.assertEqual(self.tree(), before)
         self.run_quiet(cpo.uninstall, other)
         self.assertEqual(self.tree(), before)

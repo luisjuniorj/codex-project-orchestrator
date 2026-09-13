@@ -1,5 +1,23 @@
 # Registro de validação
 
+## Versão 0.3.0
+
+Verificação local em 13 de setembro de 2026, em macOS, com Python 3.14.7 e TOML Kit 0.15.1.
+
+```text
+.venv/bin/python -m unittest discover -s tests -v
+Ran 43 tests
+OK (skipped=1)
+```
+
+Foram aprovados 42 testes. O teste de junction nativa do Windows foi ignorado por exigir Windows. A suíte verifica a configuração única com Sol `max`, papéis Luna `max`, Astra `max` e teto de oito auxiliares simultâneos além do principal.
+
+As novas verificações cobrem a remoção da opção `--mode` sem escrita parcial, a atualização de uma instalação 0.2.0 do teto dois para oito e a atualização e restauração de um estado legado `economy`. Os backups originais permanecem preservados.
+
+Os critérios de paralelismo continuam em instruções naturais: o agente distingue frentes independentes, dependências e conflitos de escrita. O instalador apenas aplica o valor numérico documentado. Os 14 casos semânticos não foram executados com modelos e não comprovam economia ou qualidade.
+
+`git diff --check` passou. Nenhuma avaliação com modelos foi executada; a suíte usa projetos temporários descartáveis.
+
 ## Versão 0.2.0
 
 Verificação local em 13 de setembro de 2026, em macOS, com Python 3.14.7 e TOML Kit 0.15.1.

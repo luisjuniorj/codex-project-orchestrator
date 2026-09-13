@@ -22,7 +22,7 @@ Julgue o comportamento pelo contexto completo e pelas evidências. Não implemen
 
 | Item | O que registrar |
 |---|---|
-| Configuração | Modo, modelo principal, esforço e versão do Codex. |
+| Configuração | Modelo principal, esforço, teto de auxiliares e versão do Codex. |
 | Delegação | Necessidade, escopo, nomes/modelos/efforts dos auxiliares. |
 | Avaliação pelo Astra | Critério aplicado, objeto e momento da avaliação; continuidade após avaliar o plano quando a implementação já está autorizada. |
 | Correção | Requisito atendido, testes apropriados e defeitos restantes. |
@@ -30,7 +30,7 @@ Julgue o comportamento pelo contexto completo e pelas evidências. Não implemen
 | Uso | Indicador disponível, janela de medição e outras execuções simultâneas. |
 | Limitações | Falta de acesso, arredondamentos e fatores que impedem comparação. |
 
-Os critérios não exigem uma resposta textual exata. Em entregas independentes, por exemplo, delegar pode ser útil, mas não é obrigatório se o principal concluir melhor sozinho. No modo `orchestration`, Sol, Luna e Astra usam `max`. Quando um critério de avaliação estiver presente e a delegação for permitida, o Astra deve ser acionado.
+Os critérios não exigem uma resposta textual exata. Em entregas independentes, deve-se avaliar paralelismo útil sem criar divisão artificial; há capacidade para até oito auxiliares, excluindo o principal. Sol, Luna e Astra usam `max`. Quando um critério de avaliação estiver presente e a delegação for permitida, o Astra deve ser acionado.
 
 Compare especialmente `explicit_deep_evaluation`, `quoted_trigger_is_not_a_request` e `explicit_review_opt_out`: pedidos equivalentes de avaliação devem acionar o Astra, enquanto uma frase citada ou negada não deve funcionar como comando. `implementation_plan` e `plan_then_implementation` distinguem entregar somente um plano de continuar até concluir uma implementação autorizada. Uma restrição de agente único continua valendo mesmo para um plano que normalmente seria avaliado pelo Astra.
 
