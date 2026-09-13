@@ -10,7 +10,7 @@ Os agentes, as configurações e as instruções ficam no projeto. O instalador 
 
 ## Instalar ou atualizar com uma IA
 
-Envie a URL deste repositório para a IA que já está trabalhando no projeto de destino. Um pedido suficiente é:
+Envie a URL deste repositório para a IA que já está trabalhando no projeto de destino. Você não precisa clonar o repositório nem executar Python; esses passos ficam com a IA. Um pedido suficiente é:
 
 > Instale ou atualize o Codex Project Orchestrator no projeto atual seguindo o README: https://github.com/luisjuniorj/codex-project-orchestrator
 
@@ -25,6 +25,18 @@ Se você é a IA responsável pela operação, siga este protocolo:
 7. Oriente o usuário a abrir uma nova tarefa do Codex para carregar a configuração.
 
 O fluxo é deliberadamente idempotente. Uma IA não precisa descobrir a versão instalada nem desinstalar antes de atualizar: deve usar uma cópia recente do instalador e repetir a sequência `install --dry-run`, `install`, `status`.
+
+### Por que a IA executa o instalador
+
+Copiar arquivos diretamente resolve apenas os quatro agentes `cpo_*.toml`. Uma instalação completa também precisa:
+
+- Mesclar as opções controladas em `.codex/config.toml` sem apagar MCPs, sandbox, provedores, comentários ou outras preferências do projeto.
+- Escolher entre `AGENTS.md` e um `AGENTS.override.md` ativo, acrescentando ou atualizando somente o bloco delimitado da política.
+- Detectar colisões e mudanças posteriores antes de substituir conteúdo.
+- Preservar o estado anterior e os backups usados em atualizações, conferência e restauração.
+- Validar os arquivos e desfazer escritas concluídas quando uma operação normal falha.
+
+Pedir que cada IA reproduza essa lógica em linguagem natural aumenta variação e consumo de contexto. O clone temporário serve para obter a versão atual; o instalador local aplica essa versão de forma repetível. A [instalação manual](docs/installation.md#instalação-manual) continua disponível quando Python não puder ser usado, sem os recursos automáticos de estado e restauração.
 
 ## Instalação pela linha de comando
 

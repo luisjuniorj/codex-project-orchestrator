@@ -8,7 +8,7 @@ Sol owns requirements, plans, and integration. Luna handles bounded reading, inv
 
 ## Install or update with an AI agent
 
-Send this repository URL to the agent already working in the target project. This request is sufficient:
+Send this repository URL to the agent already working in the target project. You do not need to clone the repository or run Python yourself; the agent handles those steps. This request is sufficient:
 
 > Install or update Codex Project Orchestrator in the current project by following its README: https://github.com/luisjuniorj/codex-project-orchestrator
 
@@ -23,6 +23,18 @@ If you are the agent performing the operation, follow this protocol:
 7. Tell the user to open a new Codex task so the configuration is loaded.
 
 This flow is deliberately idempotent. An agent does not need to detect the installed version or uninstall before an update: use a current installer checkout and repeat `install --dry-run`, `install`, and `status`.
+
+### Why the agent runs the installer
+
+Direct file copying handles only the four `cpo_*.toml` agents. A complete installation must also:
+
+- Merge controlled options into `.codex/config.toml` without deleting MCPs, sandbox settings, providers, comments, or other project preferences.
+- Select the active instruction file between `AGENTS.md` and `AGENTS.override.md`, then append or update only the delimited policy block.
+- Detect collisions and later edits before replacing content.
+- Preserve prior state and backups used by updates, verification, and restoration.
+- Validate generated files and roll back completed writes after a normal operation failure.
+
+Asking every agent to reproduce this logic from natural-language instructions adds variation and context usage. The temporary checkout obtains the current version; the local installer applies it repeatably. [Manual installation](docs/installation.md#instalação-manual) remains available when Python cannot be used, without automatic state and restoration support.
 
 ## Command-line installation
 

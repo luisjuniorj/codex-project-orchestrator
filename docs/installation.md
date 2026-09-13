@@ -14,6 +14,8 @@ Use sempre esta sequência, tanto na primeira instalação quanto nas atualizaç
 
 Prossiga da primeira para a segunda etapa somente quando a prévia for válida. Divergência, colisão, estado inválido ou backup inválido exigem preservar os arquivos e relatar o bloqueio; não há caminho automático com força. Ao concluir, confira os arquivos gerenciados no Git do destino, sem incluir mudanças preexistentes, e informe que uma nova tarefa do Codex precisa ser aberta. Commit e push ficam fora da instalação e dependem de pedido do usuário.
 
+O usuário não precisa executar comandos Python. Eles formam o procedimento local e determinístico da IA depois do clone temporário. Copiar somente `templates/agents/` deixa de fora a mesclagem de `.codex/config.toml`, a precedência entre `AGENTS.md` e `AGENTS.override.md`, os backups, a detecção de divergência e o rollback. Editar esses arquivos manualmente também invalida o estado de uma instalação registrada. Use a instalação manual apenas quando o ambiente não puder executar o instalador e aceite, nesse caso, que `status`, atualização e restauração automáticos não estarão disponíveis.
+
 ## Pré-requisitos e preparação
 
 Use Python 3.11 ou superior e um Codex que aceite os agentes personalizados e as opções descritos na documentação atual. Os modelos precisam estar disponíveis para a conta e para o cliente. Não há verificação de acesso a modelos pelo instalador; uma instalação válida em disco não concede acesso a eles.
