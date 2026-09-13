@@ -57,6 +57,27 @@ No personal Codex configuration is modified. Project configuration still inherit
 | `cpo_investigator` | `gpt-5.6-luna` | **`max`** |
 | `cpo_reviewer` | `gpt-6-astra` | **`max`** |
 
+```mermaid
+flowchart TD
+    U["YOU<br/>Goal, context, and scope"] --> S
+
+    S["SOL · MAX<br/>Understands, plans, delegates, and integrates"]
+
+    S -->|"Bounded work and corrections"| L
+    L["LUNA · MAX<br/>Reads, researches, investigates,<br/>implements, and tests"]
+    L -->|"Results and evidence"| S
+
+    S -.->|"Activates when one of these criteria applies"| G
+    G["Plan: before execution<br/>Large or high-impact delivery: after integration<br/>Direct request: thorough evaluation"]
+    G --> A
+
+    A["ASTRA · MAX<br/>Consults sources<br/>and performs a thorough evaluation"]
+    A -->|"Findings and recommendations"| S
+
+    S -->|"Scope complete and verification requirements met"| D
+    D["DELIVERY TO YOU"]
+```
+
 Typically use zero or one helper, with a maximum of two concurrent helpers including reviewers. Concurrency is not a token or spending cap. Every executor validates its own work; there is no mandatory testing agent.
 
 Astra evaluates a consolidated implementation plan before execution, a consolidated implementation whose complexity or impact warrants deep evaluation, or an object explicitly submitted for thorough evaluation. “Super avalie” is an example request, not a literal command: equivalent requests, negations, and quoted text are interpreted by the agent. File or line counts do not determine significance, and a small task does not need a formal plan just to activate a reviewer.

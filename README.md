@@ -75,12 +75,23 @@ Os três modelos do fluxo de orquestração usam `max`; Luna também usa `max` n
 
 ```mermaid
 flowchart TD
-    S["Sol · max<br/>Requisitos, plano e integração"]
-    S -->|"Entregas delimitadas"| L["Luna · max<br/>Leitura, investigação, implementação e testes"]
-    L -->|"Resultado e evidências"| S
-    S -. "Plano, entrega significativa ou pedido direto" .-> A["Astra · max<br/>Avaliação profunda"]
-    A -->|"Achados e evidências"| S
-    S -->|"Critérios de conclusão atendidos"| F["Entrega"]
+    U["VOCÊ<br/>Objetivo, contexto e escopo"] --> S
+
+    S["SOL · MAX<br/>Entende, planeja, delega e integra"]
+
+    S -->|"Trabalho e correções delimitadas"| L
+    L["LUNA · MAX<br/>Lê, pesquisa, investiga,<br/>implementa e testa"]
+    L -->|"Resultados e evidências"| S
+
+    S -.->|"Aciona quando houver um destes critérios"| G
+    G["Plano: antes da execução<br/>Entrega grande ou de alto impacto: após integração<br/>Pedido direto: super avalie"]
+    G --> A
+
+    A["ASTRA · MAX<br/>Consulta as fontes<br/>e faz a avaliação aprofundada"]
+    A -->|"Achados e recomendações"| S
+
+    S -->|"Escopo concluído e verificações atendidas"| D
+    D["ENTREGA PARA VOCÊ"]
 ```
 
 O uso normal é zero ou um auxiliar; o teto é **dois auxiliares simultâneos**, incluindo o avaliador. Esse teto limita concorrência, não tokens ou consumo acumulado. Tarefas pontuais podem ser concluídas pelo Sol quando delegar apenas acrescentaria trabalho. Os executores fazem sua própria verificação; não existe um tester obrigatório.
