@@ -1,6 +1,6 @@
 # Arquitetura e escolhas
 
-Esta configuração oferece papéis especializados sem exigir uma equipe completa para cada tarefa. O principal continua implementando e validando. A decisão de delegar pertence ao agente, orientado pelos requisitos, dependências e critérios de conclusão.
+No modo `orchestration`, Sol `max` mantém requisitos, planos e integração; Luna `max` concentra leitura, investigação, implementação e verificações; Astra `max` faz avaliações profundas em momentos definidos. Tarefas pontuais podem ser concluídas pelo principal quando a delegação apenas acrescentaria trabalho.
 
 ## Fluxos de uso
 
@@ -9,23 +9,39 @@ flowchart TD
     T["Tarefa"] --> M{"Escolha explícita do modo"}
     M -->|"Delimitada"| L["Luna · max<br/>Execução solo"]
     M -->|"Cotidiana"| E["Terra · medium<br/>Execução solo"]
-    M -->|"Complexa"| A["Astra · low<br/>Implementação e coordenação"]
-    A -. "Quando útil" .-> S["Auxiliares especializados<br/>Teto de dois simultâneos"]
-    S --> A
+    M -->|"Orquestração"| S["Sol · max<br/>Requisitos, plano e integração"]
+    S -->|"Execução delimitada"| W["Luna · max<br/>Leitura, investigação, implementação e testes"]
+    W -->|"Resultado e evidências"| S
+    S -. "Plano, entrega significativa ou pedido direto" .-> A["Astra · max<br/>Avaliação profunda"]
+    A -->|"Achados e evidências"| S
     L --> F["Entrega verificada"]
     E --> F
-    A --> F
+    S --> F
 ```
 
 O instalador seleciona um modo por argumento explícito. Ele não classifica linguagem natural, não lê os pedidos do usuário e não executa modelos. As decisões semânticas de delegação, escopo, hipótese e revisão ficam nas instruções do principal e dos auxiliares.
 
-## Por que Luna sempre max
+## Critérios de avaliação pelo Astra
 
-Luna tem taxas por token menores que os demais modelos desta configuração e suporta `max`. O projeto escolhe usar esse esforço em todas as funções Luna, concentrando o controle de consumo na necessidade e no escopo das chamadas. Isso é uma política de uso, não uma conclusão de benchmark. Mais esforço pode elevar o tempo e a quantidade de tokens.
+Sol aciona `cpo_reviewer` quando houver um plano de implementação solicitado ou necessário, uma implementação consolidada grande ou de alto impacto, ou um pedido direto de avaliação aprofundada. Um plano é um artefato com decisões, dependências e estratégia de validação; tarefas simples não precisam produzir esse artefato por rotina. Complexidade, impacto e acoplamento orientam a avaliação de uma implementação, independentemente de contagens de arquivos ou linhas.
 
-Terra `medium` serve a investigações que exigem conectar comportamentos. Astra `low` é o ponto inicial do principal complexo; problemas mais difíceis podem justificar selecionar `medium` ou `high`. O revisor fornecido é fixado em Astra `medium`. Para usar `high`, adapte explicitamente seu TOML ou crie outro papel, considerando que editar arquivos gerenciados afeta a restauração automática.
+“Super avalie” exemplifica a intenção de avaliação aprofundada. Sol interpreta o pedido completo, incluindo outras formulações, negações e conteúdo citado. Não há comando especial nem classificador de palavras. Restrições do usuário, modos solo e indisponibilidade de ferramentas prevalecem, e uma avaliação impedida deve ser informada como não realizada.
 
-Sol e Spark não são dependências desta primeira versão. Evitar uma cadeia obrigatória de modelos mantém o fluxo menor. Eles podem ser avaliados em projetos específicos, conforme acesso e necessidades.
+O plano consolidado é avaliado antes da execução dependente de suas decisões. Quando o pedido inclui implementar, os achados são incorporados e o trabalho autorizado continua. Um pedido somente de planejamento ou avaliação termina nessa entrega. Uma implementação significativa é avaliada ao ser consolidada; a avaliação do plano e a do código têm objetos distintos.
+
+## Responsabilidade e repetição
+
+Luna verifica sua própria entrega. Sol confere requisitos, resolve decisões e integra os resultados, sem repetir a avaliação profunda atribuída ao Astra. O avaliador recebe requisitos, decisões, arquivos ou diff pertinentes e resultados das verificações, mas consulta as fontes necessárias com independência.
+
+A avaliação ocorre uma vez por plano ou entrega consolidada que satisfaça os critérios, evitando acionamentos a cada atualização do executor. Achados pertinentes voltam ao executor para correção. Sol confere as evidências de fechamento; se for necessária nova avaliação, o Astra examina os achados e os efeitos das mudanças. A ampliação de escopo exige novas evidências.
+
+## Esforço e consumo
+
+Sol, Luna e Astra usam `max` no fluxo de orquestração por escolha explícita. Luna tem taxas por token menores, mas o consumo total também depende de contexto, frequência de avaliações e retrabalho. Mais esforço pode elevar tempo e tokens; a configuração não comprova economia de franquia nem qualidade superior em toda tarefa.
+
+Os modelos e esforços são fixados nos TOMLs dos agentes. O papel `cpo_investigator` continua existindo para investigar questões delimitadas entre componentes, agora com Luna `max`. A decisão central permanece com Sol. Terra `medium` permanece apenas no modo solo `everyday`; Luna `max` é o principal do modo solo `economy`.
+
+A versão 0.2.0 preserva os quatro caminhos de agentes e o schema de instalação da 0.1.0. Reinstalar atualiza modelos e instruções, mantendo o backup original. O comando `status` lê a configuração instalada, de modo que uma instalação antiga continue sendo apresentada com seus próprios valores antes da atualização.
 
 ## Limites do desenho
 
@@ -46,7 +62,9 @@ Essas fontes sustentam a especialização seletiva; não validam a combinação 
 |---|---|
 | OpenAI, [Subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents) | Formato de agentes e configurações por função. |
 | OpenAI, [Models](https://learn.chatgpt.com/docs/models) e [Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna) | Identificadores e esforços suportados. |
+| OpenAI, [Sol](https://developers.openai.com/api/docs/models/gpt-5.6-sol) e [Astra](https://developers.openai.com/api/docs/models/gpt-6-astra) | Modelos configurados para coordenação e avaliação. |
 | OpenAI, [Reasoning](https://developers.openai.com/api/docs/guides/reasoning#reasoning-effort) | Critérios de esforço. |
+| OpenAI, [Rethinking skills and prompts for GPT-6 Astra](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra), setembro de 2026 | Escopo das instruções, contexto proporcional e critérios de conclusão. |
 | OpenAI, [Pricing](https://learn.chatgpt.com/docs/pricing) e [Speed](https://learn.chatgpt.com/docs/agent-configuration/speed) | Consumo e Fast; nenhum multiplicador é usado como promessa de economia. |
 | Anthropic, [Harness design](https://www.anthropic.com/engineering/harness-design-long-running-apps), março de 2026 | Revisão e simplificação conforme a necessidade. |
 | Cursor, [Scaling long-running autonomous coding](https://cursor.com/blog/scaling-agents), janeiro de 2026 | Especialização e custo de coordenação. |

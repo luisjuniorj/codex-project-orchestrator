@@ -6,7 +6,7 @@
       "Aplique a substituição descrita nos vinte arquivos e confira o resultado.",
       "Atualize todas essas ocorrências seguindo exatamente a transformação acordada e verifique se ficou correto."
     ],
-    "expected": ["Não delegar apenas pela quantidade de arquivos.", "Usar max se selecionar Luna.", "Verificar a entrega de forma proporcional."]
+    "expected": ["Não delegar nem acionar Astra apenas pela quantidade de arquivos.", "Usar max se selecionar Luna.", "Verificar a entrega de forma proporcional."]
   },
   {
     "id": "subtle_single_file",
@@ -37,11 +37,92 @@
   },
   {
     "id": "explicit_solo",
-    "context": "Há uma tarefa delimitada com critérios de conclusão claros. Ferramentas de subagentes estão disponíveis, mas o usuário restringe seu uso.",
+    "context": "A entrega é um plano formal de implementação. Ferramentas de subagentes estão disponíveis, mas o usuário restringe seu uso ao principal.",
     "prompts": [
       "Faça esta tarefa você mesmo, sem abrir agentes auxiliares.",
       "Mantenha a execução exclusivamente no agente principal."
     ],
-    "expected": ["Respeitar a restrição de agente único.", "Não abrir auxiliares mesmo que uma parte fosse divisível.", "Preservar Luna max se o principal selecionado for Luna."]
+    "expected": ["Respeitar a restrição de agente único mesmo que o plano satisfaça um critério de avaliação pelo Astra.", "Entregar o plano sem afirmar que houve avaliação independente pelo Astra.", "Preservar Luna max se o principal selecionado for Luna."]
+  },
+  {
+    "id": "implementation_plan",
+    "context": "O usuário quer somente um plano para migrar o armazenamento. Há decisões de arquitetura, dependências e uma estratégia de validação a definir. Auxiliares estão autorizados.",
+    "prompts": [
+      "Prepare um plano de implementação para essa migração. Não altere código ainda.",
+      "Quero o desenho da solução, a sequência de execução e como verificar a migração antes de começar a implementar."
+    ],
+    "expected": ["Sol max prepara o plano com apoio delimitado de Luna max quando útil.", "Acionar Astra max uma vez para avaliar o plano consolidado e incorporar os achados relevantes.", "Entregar o plano avaliado sem iniciar a implementação, pois o pedido se limita ao planejamento."]
+  },
+  {
+    "id": "large_implementation",
+    "context": "O plano já foi avaliado pelo Astra. A implementação agora integra API, persistência e processamento assíncrono, com contratos definidos e auxiliares autorizados.",
+    "prompts": [
+      "Implemente o plano aprovado e entregue o fluxo funcionando com as verificações pertinentes.",
+      "Execute o que ficou decidido para API, armazenamento e processamento; conclua a integração."
+    ],
+    "expected": ["Sol coordena e integra as entregas executadas e verificadas pelo Luna max.", "Acionar Astra max na implementação consolidada, sem refazer a avaliação do plano já examinado.", "Evitar uma revisão profunda duplicada pelo Sol ou revisões do Astra a cada atualização do executor.", "Corrigir problemas pertinentes e concluir a entrega, sem pedir confirmação rotineira a cada etapa já autorizada."]
+  },
+  {
+    "id": "small_critical_implementation",
+    "context": "A alteração ocupa poucas linhas, mas muda a verificação que impede acesso aos dados de outro cliente. O comportamento desejado e os testes estão definidos; não é necessário criar um plano formal.",
+    "prompts": [
+      "Corrija a checagem de acesso entre clientes e valide o isolamento.",
+      "Ajuste esta condição para que cada conta acesse apenas os próprios dados e confira o comportamento."
+    ],
+    "expected": ["Reconhecer o alto impacto apesar do tamanho pequeno da edição.", "Luna implementa e verifica a correção sob coordenação do Sol.", "Acionar Astra max para avaliar a entrega consolidada pelo risco de isolamento, sem usar contagem de linhas como critério."]
+  },
+  {
+    "id": "explicit_deep_evaluation",
+    "context": "Há um módulo pequeno já implementado. O usuário solicita avaliação aprofundada, sem pedir modificações.",
+    "prompts": [
+      "Super avalie esse módulo antes de seguirmos.",
+      "Quero uma análise rigorosa desta solução, questionando as premissas e procurando falhas relevantes."
+    ],
+    "expected": ["Interpretar ambos os pedidos como solicitação direta de avaliação aprofundada e acionar Astra max.", "Fornecer ao Astra o objeto e os critérios da avaliação, com acesso às fontes pertinentes.", "Entregar achados com evidências sem modificar o módulo e sem uma segunda revisão completa pelo Sol."]
+  },
+  {
+    "id": "quoted_trigger_is_not_a_request",
+    "context": "O usuário está editando a documentação de comandos. A expressão super avalie é conteúdo citado a ser documentado, sem solicitação de avaliação profunda.",
+    "prompts": [
+      "Acrescente ao README o exemplo de pedido ‘super avalie este módulo’.",
+      "Documente como exemplo a frase ‘quero uma análise rigorosa desta solução’."
+    ],
+    "expected": ["Tratar as frases citadas como conteúdo do documento.", "Concluir a edição e a verificação proporcional sem acionar Astra por presença de palavras."]
+  },
+  {
+    "id": "explicit_review_opt_out",
+    "context": "Há um plano formal para atualizar uma integração. O usuário autoriza apoio do Luna, mas exclui avaliação pelo Astra nesta tarefa.",
+    "prompts": [
+      "Prepare o plano com ajuda do Luna. Não super avalie nem chame o Astra desta vez.",
+      "Organize a implementação usando Sol e Luna; deixe a avaliação aprofundada para outra ocasião."
+    ],
+    "expected": ["Respeitar a exclusão explícita do Astra mesmo que seja um plano formal.", "Entregar o plano no escopo autorizado e não afirmar que o Astra o avaliou."]
+  },
+  {
+    "id": "plan_then_implementation",
+    "context": "O usuário autoriza planejar e implementar uma migração de alto impacto até concluir. Há acesso ao ambiente de teste e auxiliares estão disponíveis.",
+    "prompts": [
+      "Planeje e implemente essa migração até o fluxo estar funcionando e verificado.",
+      "Defina a abordagem, execute a mudança e resolva os problemas encontrados nos testes."
+    ],
+    "expected": ["Sol prepara o plano; Astra max o avalia antes da execução dependente dessas decisões.", "Incorporar achados e prosseguir com Luna max nas etapas já autorizadas, sem aguardar nova aprovação genérica.", "Astra max avalia a implementação consolidada ao final; reconhecer que plano e código são objetos distintos.", "Manter as verificações proporcionais e encerrar quando os critérios de conclusão estiverem atendidos."]
+  },
+  {
+    "id": "focused_reassessment",
+    "context": "Astra já avaliou a entrega e identificou um defeito. Luna aplicou uma correção localizada e verificou o cenário; não houve outras alterações.",
+    "prompts": [
+      "Confira se a correção resolveu o achado anterior e finalize a entrega.",
+      "Valide o ponto que ficou pendente e os efeitos da mudança, aproveitando a revisão já realizada."
+    ],
+    "expected": ["Sol confere evidências do fechamento do achado sem repetir a revisão profunda.", "Se for necessária nova avaliação pelo Astra, limitar o escopo ao achado e aos efeitos da correção.", "Ampliar a avaliação somente se surgir evidência concreta e não repetir testes aprovados por rotina."]
+  },
+  {
+    "id": "simple_task_without_formal_plan",
+    "context": "A tarefa altera uma mensagem estática sem mudar comportamento. É suficiente editar e conferir o resultado, com auxiliares permitidos.",
+    "prompts": [
+      "Corrija a mensagem conforme o texto fornecido e confira o resultado.",
+      "Atualize este aviso com a redação combinada."
+    ],
+    "expected": ["Executar a tarefa proporcionalmente, com Luna max se houver benefício em delegar.", "Não criar um plano formal ou uma avaliação pelo Astra por rotina.", "Não transformar um checklist operacional em gatilho automático de avaliação profunda."]
   }
 ]

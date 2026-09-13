@@ -24,7 +24,7 @@ try:
 except ImportError:
     raise SystemExit("Dependência ausente. Execute: python -m pip install -r requirements.txt")
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 TOOL = "codex-project-orchestrator"
 TEMPLATES = Path(__file__).resolve().parent / "templates"
 STATE_DIR = ".codex/.project-orchestrator"
@@ -35,11 +35,11 @@ IGNORE = ".codex/.gitignore"
 ROLES = {
     "cpo_explorer": ("gpt-5.6-luna", "max"),
     "cpo_worker": ("gpt-5.6-luna", "max"),
-    "cpo_investigator": ("gpt-5.6-terra", "medium"),
-    "cpo_reviewer": ("gpt-6-astra", "medium"),
+    "cpo_investigator": ("gpt-5.6-luna", "max"),
+    "cpo_reviewer": ("gpt-6-astra", "max"),
 }
 MODES = {
-    "orchestration": ("gpt-6-astra", "low", True),
+    "orchestration": ("gpt-5.6-sol", "max", True),
     "everyday": ("gpt-5.6-terra", "medium", False),
     "economy": ("gpt-5.6-luna", "max", False),
 }
@@ -445,11 +445,19 @@ def status(project: str | Path) -> int:
     changed = drift(root, state)
     if instructions_file(root) != state["instructions"]:
         changed.append("arquivo de instruções ativo")
-    model, effort, enabled = MODES[state["mode"]]
-    print(f"Projeto: {root}\nModo registrado: {state['mode']}\nPrincipal: {model} / {effort}\nAuxiliares: {'habilitados; teto 2' if enabled else 'desabilitados'}\nLuna: max")
+    print(f"Projeto: {root}\nModo registrado: {state['mode']}\nVersão instalada: {state.get('version', 'não registrada')}")
     if changed:
         print("Divergências em disco: " + ", ".join(changed))
         return 2
+    # Read the installed configuration: newer installer defaults do not describe
+    # a project that has not yet been upgraded.
+    config = tomllib.loads(snapshot(root, CONFIG).content.decode("utf-8"))
+    model, effort = config["model"], config["model_reasoning_effort"]
+    agents = config["agents"]
+    helpers = f"habilitados; teto {agents['max_concurrent_threads_per_session']}" if agents["enabled"] else "desabilitados"
+    print(f"Principal: {model} / {effort}\nAuxiliares: {helpers}\nLuna: max")
+    if state.get("version") != VERSION:
+        print(f"Instalador disponível: {VERSION}. Use install --dry-run para conferir a atualização.")
     print("Arquivos em disco conferem com a instalação. Isso não verifica a sessão ativa do Codex.")
     return 0
 

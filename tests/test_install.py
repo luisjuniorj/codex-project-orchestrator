@@ -62,20 +62,112 @@ class InstallerTests(unittest.TestCase):
     def uninstall(self, **kwargs):
         return self.run_quiet(cpo.uninstall, self.project, **kwargs)
 
-    def test_fresh_install_is_project_scoped_and_uses_luna_max(self):
+    def install_legacy_version(self):
+        """Create a schema-1 installation with the model settings shipped in 0.1.0."""
+        templates = self.base / "legacy-templates"
+        (templates / "agents").mkdir(parents=True)
+        (templates / "policy.md").write_text("## Política anterior\n\nAstra coordena e implementa.\n", encoding="utf-8")
+        roles = {
+            "cpo_explorer": ("gpt-5.6-luna", "max"),
+            "cpo_worker": ("gpt-5.6-luna", "max"),
+            "cpo_investigator": ("gpt-5.6-terra", "medium"),
+            "cpo_reviewer": ("gpt-6-astra", "medium"),
+        }
+        for name, (model, effort) in roles.items():
+            document = cpo.tomlkit.parse((ROOT / "templates/agents" / f"{name}.toml").read_text(encoding="utf-8"))
+            document["model"] = model
+            document["model_reasoning_effort"] = effort
+            (templates / "agents" / f"{name}.toml").write_text(cpo.tomlkit.dumps(document), encoding="utf-8")
+        with patch.object(cpo, "VERSION", "0.1.0"), patch.object(cpo, "TEMPLATES", templates), patch.object(cpo, "ROLES", roles):
+            with patch.dict(cpo.MODES, {"orchestration": ("gpt-6-astra", "low", True)}):
+                self.install()
+
+    def test_fresh_install_is_project_scoped_and_uses_sol_luna_astra_max(self):
         global_before = self.tree(self.fake_home)
         self.install()
         config = tomllib.loads((self.project / cpo.CONFIG).read_text(encoding="utf-8"))
-        self.assertEqual(config["model"], "gpt-6-astra")
-        self.assertEqual(config["model_reasoning_effort"], "low")
+        self.assertEqual(config["model"], "gpt-5.6-sol")
+        self.assertEqual(config["model_reasoning_effort"], "max")
+        self.assertTrue(config["agents"]["enabled"])
+        self.assertEqual(config["agents"]["default_subagent_model"], "gpt-5.6-luna")
         self.assertEqual(config["agents"]["default_subagent_reasoning_effort"], "max")
         self.assertEqual(config["agents"]["max_concurrent_threads_per_session"], 2)
         self.assertEqual(self.tree(self.fake_home), global_before)
-        for name, (model, effort) in cpo.ROLES.items():
+        expected_roles = {
+            "cpo_explorer": ("gpt-5.6-luna", "max"),
+            "cpo_worker": ("gpt-5.6-luna", "max"),
+            "cpo_investigator": ("gpt-5.6-luna", "max"),
+            "cpo_reviewer": ("gpt-6-astra", "max"),
+        }
+        for name, (model, effort) in expected_roles.items():
             agent = tomllib.loads((self.project / f".codex/agents/{name}.toml").read_text(encoding="utf-8"))
             self.assertEqual((agent["model"], agent["model_reasoning_effort"]), (model, effort))
         self.assertIn(cpo.POLICY_BEGIN, (self.project / "AGENTS.md").read_text(encoding="utf-8"))
         self.assertEqual(self.run_quiet(cpo.status, self.project), 0)
+
+    def test_upgrade_from_010_preserves_originals_and_is_idempotent(self):
+        self.write(cpo.CONFIG, '# Preferência original\nmodel = "original"\nservice_tier = "default"\n')
+        self.write("AGENTS.md", "Instruções existentes.\r\n")
+        original_tree = self.tree()
+        self.install_legacy_version()
+        legacy_tree = self.tree()
+        backups = self.tree(self.project / cpo.STATE_DIR / "original")
+        self.install(dry_run=True)
+        self.assertEqual(self.tree(), legacy_tree)
+        self.install()
+        config = tomllib.loads((self.project / cpo.CONFIG).read_text(encoding="utf-8"))
+        self.assertEqual((config["model"], config["model_reasoning_effort"]), ("gpt-5.6-sol", "max"))
+        self.assertEqual(config["service_tier"], "default")
+        for name, expected in {"cpo_investigator": "gpt-5.6-luna", "cpo_reviewer": "gpt-6-astra"}.items():
+            agent = tomllib.loads((self.project / f".codex/agents/{name}.toml").read_text(encoding="utf-8"))
+            self.assertEqual((agent["model"], agent["model_reasoning_effort"]), (expected, "max"))
+        expected_policy = cpo.append_block(original_tree["AGENTS.md"], (ROOT / "templates/policy.md").read_text(encoding="utf-8"), cpo.POLICY_BEGIN, cpo.POLICY_END)
+        self.assertEqual((self.project / "AGENTS.md").read_bytes(), expected_policy)
+        self.assertEqual(cpo.load_state(self.project)["version"], cpo.VERSION)
+        self.assertEqual(self.tree(self.project / cpo.STATE_DIR / "original"), backups)
+        upgraded_tree = self.tree()
+        self.install()
+        self.assertEqual(self.tree(), upgraded_tree)
+        self.uninstall()
+        self.assertEqual(self.tree(), original_tree)
+
+    def test_status_reports_installed_models_before_upgrade(self):
+        self.install_legacy_version()
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(cpo.status(self.project), 0)
+        self.assertIn("Principal: gpt-6-astra / low", output.getvalue())
+        self.assertIn("Versão instalada: 0.1.0", output.getvalue())
+        self.assertNotIn("Principal: gpt-5.6-sol", output.getvalue())
+        self.install()
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(cpo.status(self.project), 0)
+        self.assertIn("Principal: gpt-5.6-sol / max", output.getvalue())
+
+    def test_upgrade_refuses_modified_legacy_reviewer(self):
+        self.install_legacy_version()
+        with (self.project / ".codex/agents/cpo_reviewer.toml").open("a", encoding="utf-8") as stream:
+            stream.write("\n# Regra local preservada\n")
+        before = self.tree()
+        for dry_run in (True, False):
+            with self.subTest(dry_run=dry_run), self.assertRaises(cpo.InstallError):
+                self.install(dry_run=dry_run)
+            self.assertEqual(self.tree(), before)
+
+    def test_status_reports_missing_or_invalid_config_without_guessing_model(self):
+        self.install()
+        for content in (None, b"model = [broken\n"):
+            with self.subTest(content=content):
+                if content is None:
+                    (self.project / cpo.CONFIG).unlink()
+                else:
+                    self.write(cpo.CONFIG, content)
+                output = io.StringIO()
+                with redirect_stdout(output):
+                    self.assertEqual(cpo.status(self.project), 2)
+                self.assertIn(cpo.CONFIG, output.getvalue())
+                self.assertNotIn("Principal:", output.getvalue())
 
     def test_dry_run_creates_no_files_or_directories(self):
         before = list(self.project.rglob("*"))

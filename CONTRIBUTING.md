@@ -12,6 +12,8 @@ Mudanças no instalador precisam preservar estes contratos:
 - Escritas limitadas ao projeto explicitamente informado.
 - Nenhuma alteração de configuração pessoal, autenticação ou permissões do Codex.
 - Luna sempre em `max` nos modos e templates fornecidos.
+- No modo `orchestration`, Sol `max` coordena, Luna `max` executa e Astra `max` avalia planos, entregas grandes ou de alto impacto e pedidos diretos de avaliação aprofundada.
+- Integração pelo Sol e verificação pelo executor sem duplicar a avaliação profunda do Astra; reavaliações concentradas nos achados e efeitos das correções.
 - TOML existente preservado nas opções não controladas e nos comentários.
 - Prévia sem escrita, reinstalação idempotente e backups anteriores à primeira instalação.
 - Recusa de sobrescrever edições posteriores, caminhos redirecionados e colisões de agentes.

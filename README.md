@@ -1,8 +1,8 @@
 # Codex Project Orchestrator
 
-**Orquestração seletiva para Codex, instalada em cada projeto. Luna sempre em `max`.**
+**Sol `max` coordena, Luna `max` executa e Astra `max` avalia em momentos definidos.**
 
-Astra coordena trabalhos complexos e também implementa. Luna executa entregas delimitadas. Terra investiga questões que exigem mais julgamento. Uma revisão independente entra quando pode acrescentar algo relevante.
+Sol mantém requisitos, planos e integração. Luna concentra leitura, investigação, implementação e verificações. Astra avalia planos de implementação, entregas grandes ou de alto impacto e pedidos diretos de avaliação aprofundada, como “super avalie”.
 
 Os agentes, as configurações e as instruções ficam no projeto. O instalador preserva opções existentes, cria backups locais e permite restaurar o estado anterior.
 
@@ -65,39 +65,45 @@ Se houver um `AGENTS.override.md` não vazio na raiz do projeto, o bloco será a
 
 | Papel | Modelo | Effort | Quando entra |
 |---|---|---|---|
-| Principal do modo complexo | `gpt-6-astra` | `low` | Entende, implementa, coordena e integra. |
+| Principal de `orchestration` | `gpt-5.6-sol` | **`max`** | Entende, planeja, coordena e integra. |
 | `cpo_explorer` | `gpt-5.6-luna` | **`max`** | Leitura e coleta de evidências delimitadas. |
 | `cpo_worker` | `gpt-5.6-luna` | **`max`** | Implementação com entrega e arquivos definidos. |
-| `cpo_investigator` | `gpt-5.6-terra` | `medium` | Investigação entre componentes. |
-| `cpo_reviewer` | `gpt-6-astra` | `medium` | Revisão independente justificada. |
+| `cpo_investigator` | `gpt-5.6-luna` | **`max`** | Investigação delimitada entre componentes. |
+| `cpo_reviewer` | `gpt-6-astra` | **`max`** | Avaliação profunda pelos critérios abaixo. |
 
-Luna usa `max` em todos os papéis e também no modo solo. Essa é uma escolha explícita desta configuração, sem promessa de economia ou qualidade superior em toda tarefa. Modelos e esforços fixados nos TOMLs dos agentes prevalecem sobre os valores resolvidos ao criar o auxiliar; um pedido verbal não deve ser tratado como alteração garantida do arquivo.
+Os três modelos do fluxo de orquestração usam `max`; Luna também usa `max` no modo solo. É uma escolha explícita, sem promessa de economia ou qualidade superior em toda tarefa. O controle de consumo depende do escopo, da frequência das avaliações e do retrabalho. Modelos e esforços fixados nos TOMLs dos agentes prevalecem sobre os valores resolvidos ao criar o auxiliar; um pedido verbal não altera esses arquivos.
 
 ```mermaid
 flowchart TD
-    A["Astra · low<br/>Entende, planeja e implementa"]
-    A --> V["Integra e verifica"]
-    A -. "Leitura pontual" .-> E["Luna · max<br/>Explorer"]
-    A -. "Entrega delimitada" .-> W["Luna · max<br/>Worker"]
-    A -. "Investigação técnica" .-> I["Terra · medium<br/>Investigator"]
-    E --> V
-    W --> V
-    I --> V
-    V --> Q{"Revisão independente<br/>acrescenta valor?"}
-    Q -->|"Não"| F["Entrega"]
-    Q -->|"Sim"| R["Astra · medium<br/>Reviewer"]
-    R -->|"Sem problemas bloqueantes"| F
-    R -->|"Problemas demonstrados"| C["Correção e nova verificação"]
-    C --> V
+    S["Sol · max<br/>Requisitos, plano e integração"]
+    S -->|"Entregas delimitadas"| L["Luna · max<br/>Leitura, investigação, implementação e testes"]
+    L -->|"Resultado e evidências"| S
+    S -. "Plano, entrega significativa ou pedido direto" .-> A["Astra · max<br/>Avaliação profunda"]
+    A -->|"Achados e evidências"| S
+    S -->|"Critérios de conclusão atendidos"| F["Entrega"]
 ```
 
-As linhas pontilhadas são opcionais. O uso normal é zero ou um auxiliar; o teto é **dois auxiliares simultâneos**, incluindo o revisor. Esse teto limita concorrência, não tokens ou consumo acumulado. Os executores fazem sua própria verificação; não existe um tester obrigatório.
+O uso normal é zero ou um auxiliar; o teto é **dois auxiliares simultâneos**, incluindo o avaliador. Esse teto limita concorrência, não tokens ou consumo acumulado. Tarefas pontuais podem ser concluídas pelo Sol quando delegar apenas acrescentaria trabalho. Os executores fazem sua própria verificação; não existe um tester obrigatório.
+
+## Quando o Astra avalia
+
+| Critério | Momento e objeto |
+|---|---|
+| Plano de implementação solicitado ou necessário | Sol prepara o plano; Astra avalia premissas, arquitetura, dependências, riscos e validação antes da execução. |
+| Implementação grande ou de alto impacto | Astra avalia a entrega consolidada: correção, integração, regressões e lacunas relevantes nos testes. |
+| Pedido direto de avaliação aprofundada | Astra avalia o objeto indicado, mesmo que pequeno. “Super avalie” é um exemplo; pedidos equivalentes também se aplicam. |
+
+Sol decide pelo significado da tarefa, pela complexidade, pelo impacto e pelas dependências. Contagem de linhas ou arquivos não determina a necessidade de avaliação. Frases citadas e negações são interpretadas no contexto. Um checklist operacional de tarefa simples não exige criar um plano formal.
+
+Sol confere atendimento aos requisitos e integração, sem fazer outra revisão profunda com o mesmo objetivo. Astra consulta código e contexto com independência. Avalie uma vez por plano ou entrega consolidada, evitando chamadas a cada atualização do executor. Correções voltam ao Luna; uma reavaliação necessária se concentra nos achados e nos efeitos das mudanças.
+
+Um pedido que inclui plano e implementação significativa pode ter duas avaliações, de objetos distintos. Depois de incorporar os achados do plano, Sol prossegue com a implementação já autorizada. Se o pedido for somente planejamento ou avaliação, entrega esse resultado. Restrições explícitas do usuário e modos sem auxiliares prevalecem; uma avaliação impedida deve ser informada como não realizada.
 
 ## Três modos
 
 | `--mode` | Principal | Auxiliares | Uso sugerido |
 |---|---|---|---|
-| `orchestration` — padrão | Astra `low` | Habilitados, teto 2 | Trabalho complexo e coordenação seletiva. |
+| `orchestration` — padrão | Sol **`max`** | Habilitados, teto 2 | Coordenação, execução pelo Luna e avaliação pelo Astra conforme os critérios. |
 | `everyday` | Terra `medium` | Desabilitados | Desenvolvimento cotidiano. |
 | `economy` | Luna **`max`** | Desabilitados | Tarefas claras e delimitadas. |
 
@@ -135,7 +141,7 @@ python install.py uninstall --project "/caminho/do/meu-projeto" --dry-run
 python install.py uninstall --project "/caminho/do/meu-projeto"
 ```
 
-`status` verifica os arquivos em disco; não inspeciona uma sessão ativa do Codex. A desinstalação restaura os arquivos anteriores à primeira instalação e remove os arquivos criados por ela, desde que estejam intactos. Trocar de modo mantém os backups originais.
+`status` informa a versão instalada e o principal registrado no arquivo de configuração, inclusive antes de atualizar uma instalação antiga. Verifica os arquivos em disco; não inspeciona uma sessão ativa do Codex. A desinstalação restaura os arquivos anteriores à primeira instalação e remove os arquivos criados por ela, desde que estejam intactos. Trocar de modo mantém os backups originais.
 
 Se um arquivo gerenciado tiver sido alterado depois, a reinstalação e a desinstalação param antes de sobrescrevê-lo. Isso inclui edições em configurações e instruções. Não há `--force`. Consulte [atualização e recuperação manual](docs/installation.md#arquivos-modificados-e-recuperação).
 
