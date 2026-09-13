@@ -89,6 +89,7 @@ class InstallerTests(unittest.TestCase):
             patch.object(cpo, "INSTALL_PROFILE", mode),
             patch.object(cpo, "PRIMARY_CONFIG", primary),
             patch.object(cpo, "MAX_CONCURRENT_THREADS", 2),
+            patch.object(cpo, "POLICY_PADDING", False),
             patch.object(cpo, "TEMPLATES", templates),
             patch.object(cpo, "ROLES", roles),
         ):
@@ -134,7 +135,13 @@ class InstallerTests(unittest.TestCase):
         for name, expected in {"cpo_investigator": "gpt-5.6-luna", "cpo_reviewer": "gpt-6-astra"}.items():
             agent = tomllib.loads((self.project / f".codex/agents/{name}.toml").read_text(encoding="utf-8"))
             self.assertEqual((agent["model"], agent["model_reasoning_effort"]), (expected, "max"))
-        expected_policy = cpo.append_block(original_tree["AGENTS.md"], (ROOT / "templates/policy.md").read_text(encoding="utf-8"), cpo.POLICY_BEGIN, cpo.POLICY_END)
+        expected_policy = cpo.append_block(
+            original_tree["AGENTS.md"],
+            (ROOT / "templates/policy.md").read_text(encoding="utf-8"),
+            cpo.POLICY_BEGIN,
+            cpo.POLICY_END,
+            padded=cpo.POLICY_PADDING,
+        )
         self.assertEqual((self.project / "AGENTS.md").read_bytes(), expected_policy)
         self.assertEqual(cpo.load_state(self.project)["version"], cpo.VERSION)
         self.assertEqual(self.tree(self.project / cpo.STATE_DIR / "original"), backups)
@@ -265,6 +272,19 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(config["agents"]["max_concurrent_threads_per_session"], 8)
         self.assertEqual(cpo.load_state(self.project)["version"], cpo.VERSION)
         self.assertEqual(self.tree(self.project / cpo.STATE_DIR / "original"), before)
+
+    def test_upgrade_accepts_markdown_formatter_spacing_inside_policy_markers(self):
+        self.install_legacy_version(version="0.2.0", primary=("gpt-5.6-sol", "max", True))
+        policy = self.project / "AGENTS.md"
+        formatted = policy.read_text(encoding="utf-8").replace(
+            cpo.POLICY_BEGIN + "\n", cpo.POLICY_BEGIN + "\n\n", 1
+        ).replace("\n" + cpo.POLICY_END, "\n\n" + cpo.POLICY_END, 1)
+        policy.write_text(formatted, encoding="utf-8")
+        self.install()
+        self.assertEqual(self.run_quiet(cpo.status, self.project), 0)
+        updated = policy.read_text(encoding="utf-8")
+        self.assertIn(cpo.POLICY_BEGIN + "\n\n## Orquestração", updated)
+        self.assertIn("\n\n" + cpo.POLICY_END, updated)
 
     def test_uninstall_fresh_install_restores_empty_project(self):
         self.install()

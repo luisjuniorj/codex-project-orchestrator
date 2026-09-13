@@ -112,7 +112,7 @@ Um pedido que inclui plano e implementação significativa pode ter duas avalia�
 
 ## Configuração única
 
-O instalador expõe somente este fluxo de orquestração. Não existe `--mode`, roteador por palavras nem troca automática do modelo principal. Instalações intactas das versões 0.1.0 e 0.2.0 podem ser atualizadas; estados antigos `everyday` e `economy` são aceitos apenas para permitir atualização, consulta e restauração seguras.
+O instalador expõe somente este fluxo de orquestração. Não existe `--mode`, roteador por palavras nem troca automática do modelo principal. Instalações intactas de versões anteriores podem ser atualizadas; estados antigos `everyday` e `economy` são aceitos apenas para permitir atualização, consulta e restauração seguras.
 
 ## Repetir em outros projetos
 

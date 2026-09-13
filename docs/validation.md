@@ -1,5 +1,19 @@
 # Registro de validação
 
+## Versão 0.3.1
+
+Verificação local em 13 de setembro de 2026, em macOS, com Python 3.14.7 e TOML Kit 0.15.1.
+
+```text
+.venv/bin/python -m unittest discover -s tests -v
+Ran 44 tests
+OK (skipped=1)
+```
+
+Foram aprovados 43 testes. O teste adicional reproduz o espaçamento inserido por um formatador Markdown dentro dos marcadores da política, confirma que a atualização o aceita e verifica a configuração final. Outras divergências continuam cobertas pelos testes conservadores existentes.
+
+`git diff --check` passou. Nenhuma avaliação com modelos foi executada; a suíte usa projetos temporários descartáveis.
+
 ## Versão 0.3.0
 
 Verificação local em 13 de setembro de 2026, em macOS, com Python 3.14.7 e TOML Kit 0.15.1.

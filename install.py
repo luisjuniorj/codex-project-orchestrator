@@ -24,7 +24,7 @@ try:
 except ImportError:
     raise SystemExit("Dependência ausente. Execute: python -m pip install -r requirements.txt")
 
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 TOOL = "codex-project-orchestrator"
 INSTALL_PROFILE = "orchestration"
 # Kept only so intact 0.1/0.2 installations can still be inspected, upgraded,
@@ -32,6 +32,7 @@ INSTALL_PROFILE = "orchestration"
 LEGACY_STATE_MODES = frozenset({"orchestration", "everyday", "economy"})
 PRIMARY_CONFIG = ("gpt-5.6-sol", "max", True)
 MAX_CONCURRENT_THREADS = 8
+POLICY_PADDING = True
 TEMPLATES = Path(__file__).resolve().parent / "templates"
 STATE_DIR = ".codex/.project-orchestrator"
 STATE_FILE = f"{STATE_DIR}/state.json"
@@ -260,7 +261,11 @@ def drift(root: Path, state: dict) -> list[str]:
     changed = []
     for relative, entry in state["files"].items():
         current = snapshot(root, relative)
-        if current.content is None or digest(current.content) != entry["installed_sha256"]:
+        content = current.content
+        matches = content is not None and digest(content) == entry["installed_sha256"]
+        if not matches and content is not None and relative == state["instructions"]:
+            matches = digest(unpad_policy_block(content)) == entry["installed_sha256"]
+        if not matches:
             changed.append(relative)
         elif os.name != "nt" and current.mode != entry["installed_mode"]:
             changed.append(relative)
@@ -272,14 +277,33 @@ def instructions_file(root: Path) -> str:
     return "AGENTS.override.md" if override is not None and override.strip() else "AGENTS.md"
 
 
-def append_block(data: bytes | None, body: str, begin: str, end: str) -> bytes:
+def unpad_policy_block(data: bytes) -> bytes:
+    """Normalize one formatter-added blank line inside the typed policy markers."""
+    newline = b"\r\n" if b"\r\n" in data else b"\n"
+    begin = POLICY_BEGIN.encode() + newline
+    end = newline + POLICY_END.encode()
+    if data.count(begin + newline) == 1:
+        data = data.replace(begin + newline, begin, 1)
+    if data.count(newline + end) == 1:
+        data = data.replace(newline + end, end, 1)
+    return data
+
+
+def append_block(data: bytes | None, body: str, begin: str, end: str, *, padded: bool = False) -> bytes:
     """Append a delimited installer block, without interpreting human instructions."""
     text = (data or b"").decode("utf-8")
     if begin in text or end in text:
         raise InstallError("Já existe um bloco deste instalador sem um estado correspondente. Confira a instalação manual.")
     newline = "\r\n" if "\r\n" in text else "\n"
     separator = "" if not text or text.endswith(newline * 2) else newline if text.endswith(newline) else newline * 2
-    block = newline.join([begin, body.strip().replace("\r\n", "\n").replace("\n", newline), end, ""])
+    parts = [begin]
+    if padded:
+        parts.append("")
+    parts.append(body.strip().replace("\r\n", "\n").replace("\n", newline))
+    if padded:
+        parts.append("")
+    parts.extend([end, ""])
+    block = newline.join(parts)
     return (text + separator + block).encode("utf-8")
 
 
@@ -376,7 +400,13 @@ def installation_plan(root: Path, missing_dirs: list[str]) -> tuple[list[Change]
     originals = {relative: original(root, state, relative) if state else current[relative] for relative in managed}
     desired = {
         CONFIG: render_config(current[CONFIG].content),
-        instruction: append_block(originals[instruction].content, (TEMPLATES / "policy.md").read_text(encoding="utf-8"), POLICY_BEGIN, POLICY_END),
+        instruction: append_block(
+            originals[instruction].content,
+            (TEMPLATES / "policy.md").read_text(encoding="utf-8"),
+            POLICY_BEGIN,
+            POLICY_END,
+            padded=POLICY_PADDING,
+        ),
         IGNORE: append_block(originals[IGNORE].content, "/.project-orchestrator/", IGNORE_BEGIN, IGNORE_END),
         **roles,
     }

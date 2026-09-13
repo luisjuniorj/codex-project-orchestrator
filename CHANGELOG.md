@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1 — 2026-09-13
+
+- Blocos de política em Markdown agora usam espaçamento estável ao redor do conteúdo.
+- Atualizações aceitam somente a variação neutra em que um formatador acrescentou uma linha vazia dentro de cada marcador; outras mudanças continuam bloqueadas.
+
 ## 0.3.0 — 2026-09-13
 
 - Configuração única de orquestração; os modos `everyday` e `economy` e a opção `--mode` deixaram de ser oferecidos.

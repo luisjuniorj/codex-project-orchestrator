@@ -86,7 +86,7 @@ Sol checks requirements and integration without duplicating Astra's deep evaluat
 
 ## Single configuration
 
-The installer exposes only this orchestration flow. There is no `--mode`, keyword router, or automatic primary-model switching. Intact 0.1.0 and 0.2.0 installations can be upgraded while preserving original backups and agent filenames. Legacy `everyday` and `economy` state values are accepted only for safe inspection, upgrade, and restoration. Preview an update with `--dry-run`; reinstalling an unchanged installation is idempotent.
+The installer exposes only this orchestration flow. There is no `--mode`, keyword router, or automatic primary-model switching. Intact installations from earlier versions can be upgraded while preserving original backups and agent filenames. Legacy `everyday` and `economy` state values are accepted only for safe inspection, upgrade, and restoration. Preview an update with `--dry-run`; reinstalling an unchanged installation is idempotent.
 
 ## Restore and maintain
 

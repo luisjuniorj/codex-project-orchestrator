@@ -65,7 +65,9 @@ Execute novamente `install`. A instalação precisa estar intacta. O instalador 
 
 Uma nova versão deste repositório pode atualizar os templates ao executar novamente o instalador, desde que mantenha o formato de estado compatível e os arquivos não tenham sido editados. O backup da primeira instalação permanece. Revise o changelog e use `--dry-run` antes de atualizar.
 
-A versão 0.3.0 atualiza instalações intactas das versões 0.1.0 e 0.2.0 com o mesmo formato de estado e os mesmos quatro nomes de agentes. A atualização aplica Sol `max`, Luna `max`, Astra `max` e eleva o teto de dois para oito auxiliares. Instalações antigas em `everyday` ou `economy` podem ser consultadas, atualizadas e desinstaladas, mas novas instalações não expõem esses modos. O comando `status` mostra a versão e a configuração efetivamente instaladas, sem atribuir os novos valores a um projeto que ainda não foi atualizado.
+A versão 0.3.1 atualiza instalações intactas das versões anteriores com o mesmo formato de estado e os mesmos quatro nomes de agentes. A atualização aplica Sol `max`, Luna `max`, Astra `max` e converge o teto para oito auxiliares. Instalações antigas em `everyday` ou `economy` podem ser consultadas, atualizadas e desinstaladas, mas novas instalações não expõem esses modos. O comando `status` mostra a versão e a configuração efetivamente instaladas, sem atribuir os novos valores a um projeto que ainda não foi atualizado.
+
+Formatadores de Markdown podem acrescentar uma linha vazia logo após o marcador inicial e antes do marcador final da política. A versão 0.3.1 reconhece apenas essa variação neutra durante a atualização; mudanças no conteúdo ou fora dos marcadores continuam sendo tratadas como divergência.
 
 Se os arquivos gerados forem versionados e clonados em outra máquina, o Codex pode usá-los diretamente. A nova cópia não possui os backups locais da instalação original; o instalador não adota silenciosamente esses arquivos como se os tivesse criado. Use a instalação manual para mantê-los, ou prepare uma instalação registrada após uma remoção revisada dos arquivos da configuração anterior.
 
