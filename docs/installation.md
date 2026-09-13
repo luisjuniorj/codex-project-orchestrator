@@ -2,6 +2,18 @@
 
 O instalador grava apenas dentro do destino informado em `--project`. O ambiente virtual Python fica na cópia deste repositório. Não é necessário instalar um plugin, configurar uma chave de API ou alterar arquivos pessoais do Codex.
 
+## Protocolo para agentes de IA
+
+Quando o usuário fornecer apenas a URL deste repositório com um pedido de instalação ou atualização, use a raiz do projeto em que ele está trabalhando como destino. Obtenha uma cópia recente do instalador em uma pasta temporária fora desse projeto, prepare o ambiente Python dentro da cópia e leia a revisão baixada antes de executar comandos.
+
+Use sempre esta sequência, tanto na primeira instalação quanto nas atualizações:
+
+1. `python install.py install --project "<raiz-absoluta-do-destino>" --dry-run`
+2. `python install.py install --project "<raiz-absoluta-do-destino>"`
+3. `python install.py status --project "<raiz-absoluta-do-destino>"`
+
+Prossiga da primeira para a segunda etapa somente quando a prévia for válida. Divergência, colisão, estado inválido ou backup inválido exigem preservar os arquivos e relatar o bloqueio; não há caminho automático com força. Ao concluir, confira os arquivos gerenciados no Git do destino, sem incluir mudanças preexistentes, e informe que uma nova tarefa do Codex precisa ser aberta. Commit e push ficam fora da instalação e dependem de pedido do usuário.
+
 ## Pré-requisitos e preparação
 
 Use Python 3.11 ou superior e um Codex que aceite os agentes personalizados e as opções descritos na documentação atual. Os modelos precisam estar disponíveis para a conta e para o cliente. Não há verificação de acesso a modelos pelo instalador; uma instalação válida em disco não concede acesso a eles.
@@ -61,9 +73,11 @@ O instalador não força Standard nem altera `service_tier`. Se preservar uso fo
 
 ## Atualizar
 
-Execute novamente `install`. A instalação precisa estar intacta. O instalador expõe uma única configuração e não aceita `--mode`.
+Obtenha primeiro uma versão recente deste repositório e execute novamente `install`. A instalação precisa estar intacta. O instalador expõe uma única configuração e não aceita `--mode`.
 
 Uma nova versão deste repositório pode atualizar os templates ao executar novamente o instalador, desde que mantenha o formato de estado compatível e os arquivos não tenham sido editados. O backup da primeira instalação permanece. Revise o changelog e use `--dry-run` antes de atualizar.
+
+O comando `install` é usado de propósito nas duas situações: ele cria uma instalação quando não existe estado e atualiza quando encontra um estado válido. Assim, uma automação que recebeu somente a URL não precisa escolher outro subcomando nem desinstalar primeiro. Repetir a mesma versão é idempotente.
 
 A versão 0.3.1 atualiza instalações intactas das versões anteriores com o mesmo formato de estado e os mesmos quatro nomes de agentes. A atualização aplica Sol `max`, Luna `max`, Astra `max` e converge o teto para oito auxiliares. Instalações antigas em `everyday` ou `economy` podem ser consultadas, atualizadas e desinstaladas, mas novas instalações não expõem esses modos. O comando `status` mostra a versão e a configuração efetivamente instaladas, sem atribuir os novos valores a um projeto que ainda não foi atualizado.
 

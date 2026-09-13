@@ -6,11 +6,29 @@ Sol owns requirements, plans, and integration. Luna handles bounded reading, inv
 
 [Português](README.md) · [Architecture and sources](docs/architecture.md) · [Detailed installation guide](docs/installation.md)
 
-## Quick start
+## Install or update with an AI agent
+
+Send this repository URL to the agent already working in the target project. This request is sufficient:
+
+> Install or update Codex Project Orchestrator in the current project by following its README: https://github.com/luisjuniorj/codex-project-orchestrator
+
+If you are the agent performing the operation, follow this protocol:
+
+1. Resolve the target project root. Use the project the user is working on; the installer checkout is never the target. If more than one path is plausible, clarify the path before writing.
+2. Obtain a fresh checkout of this repository in a temporary directory outside the target. Read the README from that checkout and do not copy templates by hand.
+3. Create the virtual environment inside the checkout and install `requirements.txt`. Do not alter the global Python or Codex installation.
+4. Run `install --dry-run` with the absolute target path. The same command handles a fresh installation and a recorded update.
+5. If the preview succeeds, run `install` without `--dry-run`, then run `status`. On drift, collisions, or invalid backups, do not force, delete state, or overwrite files; report the paths and cause to the user.
+6. Inspect only the installer-reported files in the target Git worktree. Report the installed version, changed paths, and `status` result. Do not commit or push unless the user requested it.
+7. Tell the user to open a new Codex task so the configuration is loaded.
+
+This flow is deliberately idempotent. An agent does not need to detect the installed version or uninstall before an update: use a current installer checkout and repeat `install --dry-run`, `install`, and `status`.
+
+## Command-line installation
 
 Requirements: Python 3.11+, a Codex client supporting custom agents, and account access to the configured models. The target project must be trusted in Codex. Model access is not provided by this repository.
 
-Clone this repository or download its ZIP. From the repository root:
+Clone this repository or download its ZIP into a directory outside the target project. From the installer checkout:
 
 ```sh
 python3 -m venv .venv
@@ -87,6 +105,20 @@ Sol checks requirements and integration without duplicating Astra's deep evaluat
 ## Single configuration
 
 The installer exposes only this orchestration flow. There is no `--mode`, keyword router, or automatic primary-model switching. Intact installations from earlier versions can be upgraded while preserving original backups and agent filenames. Legacy `everyday` and `economy` state values are accepted only for safe inspection, upgrade, and restoration. Preview an update with `--dry-run`; reinstalling an unchanged installation is idempotent.
+
+## Update
+
+Use a current checkout of this repository and run the same sequence used for installation:
+
+```sh
+python install.py install --project "/path/to/your-project" --dry-run
+python install.py install --project "/path/to/your-project"
+python install.py status --project "/path/to/your-project"
+```
+
+`install` reads the state recorded in the target and updates only an intact installation. It preserves backups from the first installation, replaces managed files with the current version, and does not duplicate the instruction block. Repeating the sequence with the same version leaves files unchanged.
+
+Do not use `uninstall` as an update step: it restores the previous state and removes the local history needed for automatic maintenance. If the dry run reports drift, preserve the project and follow the [manual recovery procedure](docs/installation.md#arquivos-modificados-e-recuperação).
 
 ## Restore and maintain
 

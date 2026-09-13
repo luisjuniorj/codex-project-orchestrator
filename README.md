@@ -8,11 +8,29 @@ Os agentes, as configurações e as instruções ficam no projeto. O instalador 
 
 [English](README.en.md) · [Instalação detalhada](docs/installation.md) · [Arquitetura](docs/architecture.md) · [Avaliação](docs/evaluation.md)
 
-## Comece aqui
+## Instalar ou atualizar com uma IA
+
+Envie a URL deste repositório para a IA que já está trabalhando no projeto de destino. Um pedido suficiente é:
+
+> Instale ou atualize o Codex Project Orchestrator no projeto atual seguindo o README: https://github.com/luisjuniorj/codex-project-orchestrator
+
+Se você é a IA responsável pela operação, siga este protocolo:
+
+1. Determine a raiz do projeto de destino. Use o projeto no qual o usuário está trabalhando; a cópia deste instalador nunca é o destino. Se houver mais de um candidato plausível, esclareça o caminho antes de gravar.
+2. Obtenha uma cópia nova deste repositório em uma pasta temporária fora do destino. Leia o README da revisão obtida e não copie templates manualmente.
+3. Crie o ambiente virtual nessa cópia e instale `requirements.txt`. Não altere a instalação global do Python ou do Codex.
+4. Execute `install --dry-run` com o caminho absoluto do destino. O mesmo comando atende uma instalação nova e uma atualização registrada.
+5. Se a prévia for válida, execute `install` sem `--dry-run` e depois `status`. Se houver divergência, colisão ou backup inválido, não force, não apague o estado e não sobrescreva arquivos; apresente os caminhos e a causa ao usuário.
+6. Confira no Git do destino somente os arquivos relatados pelo instalador. Informe a versão instalada, os arquivos alterados e o resultado de `status`. Não faça commit ou push sem solicitação do usuário.
+7. Oriente o usuário a abrir uma nova tarefa do Codex para carregar a configuração.
+
+O fluxo é deliberadamente idempotente. Uma IA não precisa descobrir a versão instalada nem desinstalar antes de atualizar: deve usar uma cópia recente do instalador e repetir a sequência `install --dry-run`, `install`, `status`.
+
+## Instalação pela linha de comando
 
 Pré-requisitos: **Python 3.11+**, uma versão do Codex com agentes personalizados e acesso aos modelos utilizados. O projeto deve estar marcado como confiável no Codex. A disponibilidade depende do plano e do cliente; este projeto não concede acesso a modelos.
 
-Clone este repositório pelo botão **Code** ou baixe e extraia o ZIP. Na raiz do repositório, execute:
+Clone este repositório pelo botão **Code** ou baixe e extraia o ZIP em uma pasta fora do projeto de destino. Na raiz da cópia do instalador, execute:
 
 ```sh
 # macOS / Linux: ambiente Python local a esta cópia do instalador
@@ -114,6 +132,20 @@ Um pedido que inclui plano e implementação significativa pode ter duas avalia�
 
 O instalador expõe somente este fluxo de orquestração. Não existe `--mode`, roteador por palavras nem troca automática do modelo principal. Instalações intactas de versões anteriores podem ser atualizadas; estados antigos `everyday` e `economy` são aceitos apenas para permitir atualização, consulta e restauração seguras.
 
+## Atualizar
+
+Use uma cópia recente deste repositório e execute a mesma rotina da instalação:
+
+```sh
+python install.py install --project "/caminho/do/meu-projeto" --dry-run
+python install.py install --project "/caminho/do/meu-projeto"
+python install.py status --project "/caminho/do/meu-projeto"
+```
+
+`install` detecta o estado registrado no destino e atualiza somente uma instalação íntegra. A atualização preserva os backups da primeira instalação, substitui os arquivos gerenciados pela versão atual e não duplica o bloco de instruções. Executar a rotina com a mesma versão não altera os arquivos.
+
+Não use `uninstall` como etapa de atualização: ele restaura o estado anterior e remove o histórico local necessário para a manutenção automática. Se `--dry-run` indicar divergência, preserve o projeto e siga a [recuperação manual](docs/installation.md#arquivos-modificados-e-recuperação).
+
 ## Repetir em outros projetos
 
 Use a mesma cópia do instalador, alterando `--project`:
@@ -126,10 +158,6 @@ python install.py install --project "/projetos/biblioteca"
 Cada projeto terá seu próprio estado e suas próprias regras. Repetir a instalação sem mudanças não duplica instruções e não regrava arquivos gerenciados.
 
 Você pode versionar a configuração, os agentes e as instruções geradas no Git do projeto. Quem clonar esses arquivos poderá usá-los no Codex sem executar o instalador novamente. **Os backups e o estado são locais e ficam ignorados pelo Git**; a restauração automática depende deles e não estará disponível em outra cópia que não possua esse histórico.
-
-Para pedir a instalação ao Codex, após disponibilizar este repositório:
-
-> Leia o README do Codex Project Orchestrator nesta cópia. Instale a configuração exclusivamente no projeto que estou indicando, preservando as opções existentes e usando até oito auxiliares Luna em max quando houver frentes independentes. Execute a prévia, confira os arquivos de destino e aplique a instalação. Não altere configurações globais.
 
 ## Conferir e desinstalar
 
