@@ -248,6 +248,23 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual({p: p.stat().st_mtime_ns for p in mtimes}, mtimes)
         self.assertEqual((self.project / "AGENTS.md").read_text(encoding="utf-8").count(cpo.POLICY_BEGIN), 1)
 
+    def test_windows_mode_projection_is_idempotent(self):
+        real_write = cpo.atomic_write
+
+        def windows_write(root, relative, value, created):
+            real_write(root, relative, value, created)
+            path = cpo.local_path(root, relative)
+            if value.content is not None:
+                path.chmod(0o666)
+
+        with patch.object(cpo, "IS_WINDOWS", True), patch.object(cpo, "atomic_write", side_effect=windows_write):
+            self.install()
+            before = self.tree()
+            self.install()
+            self.assertEqual(self.tree(), before)
+            state = cpo.load_state(self.project)
+            self.assertTrue(all(entry["installed_mode"] == 0 for entry in state["files"].values()))
+
     def test_legacy_economy_mode_can_be_upgraded_and_uninstalled(self):
         self.install_legacy_version(mode="economy", primary=("gpt-5.6-luna", "max", False))
         output = io.StringIO()
@@ -276,10 +293,10 @@ class InstallerTests(unittest.TestCase):
     def test_upgrade_accepts_markdown_formatter_spacing_inside_policy_markers(self):
         self.install_legacy_version(version="0.2.0", primary=("gpt-5.6-sol", "max", True))
         policy = self.project / "AGENTS.md"
-        formatted = policy.read_text(encoding="utf-8").replace(
-            cpo.POLICY_BEGIN + "\n", cpo.POLICY_BEGIN + "\n\n", 1
-        ).replace("\n" + cpo.POLICY_END, "\n\n" + cpo.POLICY_END, 1)
-        policy.write_text(formatted, encoding="utf-8")
+        formatted = policy.read_bytes().replace(
+            (cpo.POLICY_BEGIN + "\n").encode(), (cpo.POLICY_BEGIN + "\n\n").encode(), 1
+        ).replace(("\n" + cpo.POLICY_END).encode(), ("\n\n" + cpo.POLICY_END).encode(), 1)
+        policy.write_bytes(formatted)
         self.install()
         self.assertEqual(self.run_quiet(cpo.status, self.project), 0)
         updated = policy.read_text(encoding="utf-8")

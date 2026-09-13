@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2 — 2026-09-13
+
+- Saída da CLI fixada em UTF-8 para consumo consistente por subprocessos e agentes no Windows.
+- Manifesto tornou-se idempotente no Windows, onde os bits de modo POSIX mudam após a substituição de arquivos.
+- Teste de espaçamento Markdown passou a preservar as quebras de linha originais ao simular o formatador.
+- CI reduzido a três combinações representativas e limitado a mudanças no instalador, templates, dependência, testes ou no próprio workflow.
+
 ## 0.3.1 — 2026-09-13
 
 - Blocos de política em Markdown agora usam espaçamento estável ao redor do conteúdo.

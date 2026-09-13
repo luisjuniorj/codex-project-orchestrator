@@ -2,7 +2,19 @@ name: Installer tests
 
 on:
   push:
+    paths:
+      - '.github/workflows/tests.yml'
+      - 'install.py'
+      - 'requirements.txt'
+      - 'templates/**'
+      - 'tests/**'
   pull_request:
+    paths:
+      - '.github/workflows/tests.yml'
+      - 'install.py'
+      - 'requirements.txt'
+      - 'templates/**'
+      - 'tests/**'
   workflow_dispatch:
 
 permissions:
@@ -13,8 +25,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python: ['3.11', '3.14']
+        include:
+          - os: ubuntu-latest
+            python: '3.11'
+          - os: macos-latest
+            python: '3.14'
+          - os: windows-latest
+            python: '3.14'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6

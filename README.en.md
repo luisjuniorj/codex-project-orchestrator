@@ -151,7 +151,7 @@ Generated agents, settings and instructions may be committed to the target proje
 python -m unittest discover -s tests -v
 ```
 
-Tests use temporary projects and do not call LLMs or the network. CI is configured for Linux, macOS and Windows with Python 3.11 and 3.14. Check the published workflow results before treating every platform as verified.
+Tests use temporary projects and do not call LLMs or the network. One workflow runs three representative combinations: Python 3.11 on Linux and Python 3.14 on macOS and Windows. Documentation-only pushes do not start the suite. Check the published workflow results before treating every platform as verified.
 
 The repository includes semantic evaluation cases for future manual runs; no model-quality benchmark or subscription-usage savings are claimed. Maximum effort for Sol, Luna, and Astra in orchestration is a deliberate policy, not proof that it is optimal for every task. Usage depends on evaluation frequency, context, and rework. Normal write failures trigger rollback, but power loss and forced process termination require manual recovery.
 

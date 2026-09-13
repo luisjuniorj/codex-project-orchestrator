@@ -24,7 +24,7 @@ try:
 except ImportError:
     raise SystemExit("Dependência ausente. Execute: python -m pip install -r requirements.txt")
 
-VERSION = "0.3.1"
+VERSION = "0.3.2"
 TOOL = "codex-project-orchestrator"
 INSTALL_PROFILE = "orchestration"
 # Kept only so intact 0.1/0.2 installations can still be inspected, upgraded,
@@ -33,6 +33,7 @@ LEGACY_STATE_MODES = frozenset({"orchestration", "everyday", "economy"})
 PRIMARY_CONFIG = ("gpt-5.6-sol", "max", True)
 MAX_CONCURRENT_THREADS = 8
 POLICY_PADDING = True
+IS_WINDOWS = os.name == "nt"
 TEMPLATES = Path(__file__).resolve().parent / "templates"
 STATE_DIR = ".codex/.project-orchestrator"
 STATE_FILE = f"{STATE_DIR}/state.json"
@@ -72,6 +73,14 @@ class Change:
 
 def digest(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
+
+
+def configure_cli_streams() -> None:
+    """Keep piped CLI output machine-readable across operating systems."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8")
 
 
 def project_root(value: str | Path) -> Path:
@@ -121,7 +130,7 @@ def snapshot(root: Path, relative: str) -> Snapshot:
 
 def same(left: Snapshot, right: Snapshot) -> bool:
     return left.content == right.content and (
-        left.content is None or os.name == "nt" or left.mode == right.mode
+        left.content is None or IS_WINDOWS or left.mode == right.mode
     )
 
 
@@ -267,7 +276,7 @@ def drift(root: Path, state: dict) -> list[str]:
             matches = digest(unpad_policy_block(content)) == entry["installed_sha256"]
         if not matches:
             changed.append(relative)
-        elif os.name != "nt" and current.mode != entry["installed_mode"]:
+        elif not IS_WINDOWS and current.mode != entry["installed_mode"]:
             changed.append(relative)
     return changed
 
@@ -427,7 +436,8 @@ def installation_plan(root: Path, missing_dirs: list[str]) -> tuple[list[Change]
             "original_mode": prior.mode,
             "original_sha256": digest(prior.content) if prior.content is not None else None,
             "installed_sha256": digest(after.content),
-            "installed_mode": after.mode,
+            # Windows does not expose stable POSIX mode bits after replacement.
+            "installed_mode": 0 if IS_WINDOWS else after.mode,
         }
     changes.extend(Change(relative, current[relative], Snapshot(desired[relative], current[relative].mode)) for relative in managed)
     new_state = {
@@ -543,6 +553,7 @@ def uninstall(project: str | Path, dry_run: bool = False) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    configure_cli_streams()
     parser = argparse.ArgumentParser(description="Configuração de agentes Codex exclusivamente por projeto.")
     parser.add_argument("--version", action="version", version=VERSION)
     commands = parser.add_subparsers(dest="command", required=True)

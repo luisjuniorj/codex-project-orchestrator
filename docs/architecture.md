@@ -36,7 +36,7 @@ Sol, Luna e Astra usam `max` no fluxo de orquestração por escolha explícita. 
 
 Os modelos e esforços são fixados nos TOMLs dos agentes. O papel `cpo_investigator` investiga questões delimitadas entre componentes com Luna `max`; a decisão central permanece com Sol.
 
-A versão 0.3.1 preserva os quatro caminhos de agentes e o schema de instalação das versões anteriores. Reinstalar uma instalação intacta remove os antigos modos alternativos, aplica a configuração única e converge o teto de auxiliares para oito, mantendo o backup original. Estados antigos `everyday` e `economy` continuam aceitos apenas para consulta, atualização e restauração seguras. O comando `status` lê a configuração instalada, de modo que uma instalação antiga continue sendo apresentada com seus próprios valores antes da atualização.
+A versão 0.3.2 preserva os quatro caminhos de agentes e o schema de instalação das versões anteriores. Reinstalar uma instalação intacta remove os antigos modos alternativos, aplica a configuração única e converge o teto de auxiliares para oito, mantendo o backup original. Estados antigos `everyday` e `economy` continuam aceitos apenas para consulta, atualização e restauração seguras. O comando `status` lê a configuração instalada, de modo que uma instalação antiga continue sendo apresentada com seus próprios valores antes da atualização.
 
 ## Limites do desenho
 

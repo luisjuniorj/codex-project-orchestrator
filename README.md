@@ -189,7 +189,7 @@ Se um arquivo gerenciado tiver sido alterado depois, a reinstalação e a desins
 python -m unittest discover -s tests -v
 ```
 
-A suíte cobre instalação, configuração única, atualização de estados legados, mesclagem de TOML, backups, conflitos, caminhos, reinstalação e rollback. O workflow de CI está configurado para Linux, macOS e Windows com Python 3.11 e 3.14. Os resultados de cada execução estão no [GitHub Actions](https://github.com/luisjuniorj/codex-project-orchestrator/actions). Veja também o [registro de validação local](docs/validation.md).
+A suíte cobre instalação, configuração única, atualização de estados legados, mesclagem de TOML, backups, conflitos, caminhos, reinstalação e rollback. Um único workflow executa três combinações representativas: Python 3.11 no Linux e Python 3.14 no macOS e no Windows. Pushes que alteram somente documentação não iniciam essa suíte. Os resultados estão no [GitHub Actions](https://github.com/luisjuniorj/codex-project-orchestrator/actions). Veja também o [registro de validação local](docs/validation.md).
 
 Os testes não chamam modelos e não consomem a franquia do Codex. Os [casos de avaliação semântica](docs/evaluation.md) permitem conferir a política em tarefas reais, mas não são apresentados como um benchmark já executado. Uma escolha de modelo ou topologia pode precisar de ajustes para seu trabalho.
 
