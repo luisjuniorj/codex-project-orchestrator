@@ -1,5 +1,21 @@
 # Registro de validação
 
+## Versão 0.3.2
+
+Verificação local em 13 de setembro de 2026, em macOS, com Python 3.14.7 e TOML Kit 0.15.1.
+
+```text
+.venv/bin/python -m unittest discover -s tests -v
+Ran 45 tests
+OK (skipped=1)
+```
+
+Foram aprovados 44 testes. O novo teste simula a alteração dos bits de modo após cada escrita no Windows e confirma que a segunda instalação não modifica o manifesto. A saída capturada da CLI também foi decodificada como UTF-8.
+
+O [workflow 34771896187](https://github.com/luisjuniorj/codex-project-orchestrator/actions/runs/34771896187) passou em Linux com Python 3.11, macOS com Python 3.14 e Windows com Python 3.14. A execução anterior falhava somente nos dois jobs Windows por codificação da saída capturada, projeção instável das permissões no manifesto e conversão involuntária de quebras de linha no teste do formatador.
+
+`git diff --check`, compilação dos arquivos Python e validação de `evals/cases.json` passaram. Nenhuma avaliação com modelos foi executada.
+
 ## Versão 0.3.1
 
 Verificação local em 13 de setembro de 2026, em macOS, com Python 3.14.7 e TOML Kit 0.15.1.
@@ -74,6 +90,6 @@ A suíte inclui:
 - Colisões, divergências, backups inválidos, links e metadados com caminhos impróprios.
 - Rollback de falhas simuladas e preservação dos backups quando uma edição concorrente impede a restauração completa.
 
-A matriz de CI está configurada para Linux, macOS e Windows, com Python 3.11 e 3.14. Os resultados por plataforma estão no [GitHub Actions](https://github.com/luisjuniorj/codex-project-orchestrator/actions).
+A matriz inicial de CI foi configurada para Linux, macOS e Windows, com Python 3.11 e 3.14. Os resultados por plataforma estão no [GitHub Actions](https://github.com/luisjuniorj/codex-project-orchestrator/actions).
 
 Não foram executadas avaliações de qualidade de modelos, medições da franquia ou instalações em projetos reais do usuário. Os testes criam projetos temporários descartáveis.
